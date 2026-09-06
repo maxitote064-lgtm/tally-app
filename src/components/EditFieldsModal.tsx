@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font } from '../theme';
 
@@ -36,55 +36,68 @@ export function EditFieldsModal({
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
       <Pressable style={styles.backdrop} onPress={onCancel} />
-      <View style={[styles.sheet, { paddingBottom: insets.bottom + 24 }]}>
-        <Text style={styles.title}>{title}</Text>
-        <View style={{ gap: 14 }}>
-          {fields.map((f) => (
-            <View key={f.key} style={{ gap: 6 }}>
-              <Text style={styles.label}>{f.label}</Text>
-              <TextInput
-                value={values[f.key]}
-                onChangeText={(t) => setValues((v) => ({ ...v, [f.key]: t }))}
-                keyboardType={f.keyboardType === 'numeric' || f.keyboardType === 'decimal-pad' ? 'decimal-pad' : 'default'}
-                placeholder={f.placeholder}
-                placeholderTextColor="rgba(32,30,29,.4)"
-                style={styles.input}
-                autoFocus={fields[0].key === f.key}
-              />
-            </View>
-          ))}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.kav}
+        pointerEvents="box-none"
+      >
+        <View style={[styles.sheet, { paddingBottom: insets.bottom + 16 }]}>
+          <Text style={styles.title}>{title}</Text>
+          <ScrollView
+            style={{ maxHeight: 320 }}
+            contentContainerStyle={{ gap: 14 }}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            {fields.map((f) => (
+              <View key={f.key} style={{ gap: 6 }}>
+                <Text style={styles.label}>{f.label}</Text>
+                <TextInput
+                  value={values[f.key]}
+                  onChangeText={(t) => setValues((v) => ({ ...v, [f.key]: t }))}
+                  keyboardType={f.keyboardType === 'numeric' || f.keyboardType === 'decimal-pad' ? 'decimal-pad' : 'default'}
+                  placeholder={f.placeholder}
+                  placeholderTextColor="rgba(32,30,29,.4)"
+                  style={styles.input}
+                  autoFocus={fields[0].key === f.key}
+                />
+              </View>
+            ))}
+          </ScrollView>
+          <View style={styles.btnRow}>
+            <Pressable style={styles.saveBtn} onPress={() => onSave(values)}>
+              <Text style={styles.saveBtnText}>Save</Text>
+            </Pressable>
+            <Pressable style={styles.cancelBtn} onPress={onCancel}>
+              <Text style={styles.cancelBtnText}>Cancel</Text>
+            </Pressable>
+          </View>
+          {onDelete && (
+            <Pressable style={styles.deleteBtn} onPress={onDelete}>
+              <Text style={styles.deleteBtnText}>{deleteLabel}</Text>
+            </Pressable>
+          )}
         </View>
-        <View style={styles.btnRow}>
-          <Pressable style={styles.saveBtn} onPress={() => onSave(values)}>
-            <Text style={styles.saveBtnText}>Save</Text>
-          </Pressable>
-          <Pressable style={styles.cancelBtn} onPress={onCancel}>
-            <Text style={styles.cancelBtnText}>Cancel</Text>
-          </Pressable>
-        </View>
-        {onDelete && (
-          <Pressable style={styles.deleteBtn} onPress={onDelete}>
-            <Text style={styles.deleteBtnText}>{deleteLabel}</Text>
-          </Pressable>
-        )}
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: 'rgba(32,30,29,.45)' },
-  sheet: {
+  backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(32,30,29,.45)' },
+  kav: {
     position: 'absolute',
     left: 0,
     right: 0,
     bottom: 0,
+  },
+  sheet: {
     backgroundColor: colors.bg,
     borderTopWidth: 2,
     borderTopColor: colors.ink,
     paddingHorizontal: 20,
     paddingTop: 18,
-    gap: 18,
+    gap: 16,
   },
   title: {
     fontFamily: font.extrabold,
