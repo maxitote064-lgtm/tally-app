@@ -131,6 +131,7 @@ export const RECURRING = [
 ];
 
 export interface Bill {
+  id: string;
   name: string;
   personalAmount: number;
   householdAmount: number;
@@ -138,19 +139,26 @@ export interface Bill {
   urgent?: boolean;
 }
 
-export const BILLS: Bill[] = [
-  { name: 'Aluguel', personalAmount: 2700, householdAmount: 5400, due: 'paid · 1 Aug' },
-  { name: 'Condomínio', personalAmount: 740, householdAmount: 1480, due: 'paid · 5 Aug' },
-  { name: 'Enel SP', personalAmount: 206.15, householdAmount: 412.3, due: 'hit yesterday · counted on the day', urgent: true },
-  { name: 'Celular + internet', personalAmount: 130, householdAmount: 260, due: 'due 28 Aug' },
-  { name: 'Seguro', personalAmount: 380, householdAmount: 620, due: 'due 1 Sep' },
+export const DEFAULT_BILLS: Bill[] = [
+  { id: 'b1', name: 'Aluguel', personalAmount: 2700, householdAmount: 5400, due: 'paid · 1 Aug' },
+  { id: 'b2', name: 'Condomínio', personalAmount: 740, householdAmount: 1480, due: 'paid · 5 Aug' },
+  { id: 'b3', name: 'Enel SP', personalAmount: 206.15, householdAmount: 412.3, due: 'hit yesterday · counted on the day', urgent: true },
+  { id: 'b4', name: 'Celular + internet', personalAmount: 130, householdAmount: 260, due: 'due 28 Aug' },
+  { id: 'b5', name: 'Seguro', personalAmount: 380, householdAmount: 620, due: 'due 1 Sep' },
 ];
 
-export const CAPS = [
-  { name: 'Eating out', used: 1980, cap: 2200 },
-  { name: 'Groceries', used: 1840, cap: 2500 },
-  { name: 'Coffee', used: 420, cap: 540 },
-  { name: 'Transport', used: 560, cap: 950 },
+export interface Cap {
+  id: string;
+  name: string;
+  used: number;
+  cap: number;
+}
+
+export const DEFAULT_CAPS: Cap[] = [
+  { id: 'c1', name: 'Eating out', used: 1980, cap: 2200 },
+  { id: 'c2', name: 'Groceries', used: 1840, cap: 2500 },
+  { id: 'c3', name: 'Coffee', used: 420, cap: 540 },
+  { id: 'c4', name: 'Transport', used: 560, cap: 950 },
 ];
 
 export const SWEEPS = [

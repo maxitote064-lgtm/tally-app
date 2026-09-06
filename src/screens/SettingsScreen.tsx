@@ -4,7 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { colors, font, money } from '../theme';
 import { PushedHeader } from '../components/Headers';
 import { Kicker } from '../components/ui';
-import { useStore } from '../store/useStore';
+import { useStore, useBudgetCfg } from '../store/useStore';
 import { allowance } from '../store/selectors';
 import { CARDS } from '../data/mock';
 import { RootStackParamList } from '../navigation/types';
@@ -19,7 +19,8 @@ export function SettingsScreen({ navigation }: Props) {
   const hasGoal = useStore((s) => s.hasGoal);
   const replayOnboarding = useStore((s) => s.replayOnboarding);
 
-  const budget = allowance(tx, mode, demoEmpty);
+  const c = useBudgetCfg();
+  const budget = allowance(tx, mode, demoEmpty, c);
 
   const rows: { name: string; hint: string; go: () => void }[] = [
     { name: 'Household — you and Bia', hint: mode === 'us' ? 'joint view on' : 'off', go: () => setMode('us') },

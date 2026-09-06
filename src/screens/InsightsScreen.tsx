@@ -6,8 +6,8 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { colors, font, money, CAT_COLORS } from '../theme';
 import { RootHeader } from '../components/Headers';
 import { Kicker } from '../components/ui';
-import { useStore } from '../store/useStore';
-import { cfg, monthSpent, visibleTx } from '../store/selectors';
+import { useStore, useBudgetCfg } from '../store/useStore';
+import { monthSpent, visibleTx } from '../store/selectors';
 import { CATEGORIES, RECURRING } from '../data/mock';
 import { RootStackParamList, TabParamList } from '../navigation/types';
 
@@ -23,7 +23,7 @@ export function InsightsScreen({ navigation }: Props) {
   const demoEmpty = useStore((s) => s.demoEmpty);
   const hasGoal = useStore((s) => s.hasGoal);
 
-  const c = cfg(mode);
+  const c = useBudgetCfg();
   const mSpent = monthSpent(tx, mode, demoEmpty);
   const visible = visibleTx(tx, mode, demoEmpty);
   const monthBaseVal = mode === 'us' ? 6400 : 3200;

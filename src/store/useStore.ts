@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import { Category, IncomingCharge, INCOMING, SEED_TX, Transaction } from '../data/mock';
-import { Mode } from './selectors';
+import { Bill, Cap, Category, DEFAULT_BILLS, DEFAULT_CAPS, IncomingCharge, INCOMING, SEED_TX, Transaction } from '../data/mock';
+import { billsTotalFor, cfg, BudgetCfg, Mode } from './selectors';
 
 interface SplitState {
   txId: number;
@@ -28,8 +28,20 @@ interface StoreState {
   pickerTxId: number | null;
   split: SplitState | null;
   onboardingDone: boolean;
+  income: { me: number; us: number };
+  bills: Bill[];
+  caps: Cap[];
+  nextBillId: number;
+  nextCapId: number;
 
   setMode: (mode: Mode) => void;
+  setIncome: (mode: Mode, value: number) => void;
+  addBill: (bill: Omit<Bill, 'id'>) => void;
+  updateBill: (id: string, patch: Partial<Omit<Bill, 'id'>>) => void;
+  removeBill: (id: string) => void;
+  addCap: (cap: Omit<Cap, 'id'>) => void;
+  updateCap: (id: string, patch: Partial<Omit<Cap, 'id'>>) => void;
+  removeCap: (id: string) => void;
   assign: (id: number, cat: Category, splitWith?: Category | null) => void;
   openPicker: (id: number | null) => void;
   openSplit: (id: number, a: Category, b: Category) => void;
@@ -63,8 +75,23 @@ export const useStore = create<StoreState>((set, get) => ({
   pickerTxId: null,
   split: null,
   onboardingDone: false,
+  income: { me: 12800, us: 21500 },
+  bills: DEFAULT_BILLS,
+  caps: DEFAULT_CAPS,
+  nextBillId: DEFAULT_BILLS.length + 1,
+  nextCapId: DEFAULT_CAPS.length + 1,
 
   setMode: (mode) => set({ mode }),
+  setIncome: (mode, value) => set((s) => ({ income: { ...s.income, [mode]: Math.max(0, value) } })),
+
+  addBill: (bill) =>
+    set((s) => ({ bills: s.bills.concat([{ ...bill, id: `b${s.nextBillId}` }]), nextBillId: s.nextBillId + 1 })),
+  updateBill: (id, patch) => set((s) => ({ bills: s.bills.map((b) => (b.id === id ? { ...b, ...patch } : b)) })),
+  removeBill: (id) => set((s) => ({ bills: s.bills.filter((b) => b.id !== id) })),
+
+  addCap: (cap) => set((s) => ({ caps: s.caps.concat([{ ...cap, id: `c${s.nextCapId}` }]), nextCapId: s.nextCapId + 1 })),
+  updateCap: (id, patch) => set((s) => ({ caps: s.caps.map((c) => (c.id === id ? { ...c, ...patch } : c)) })),
+  removeCap: (id) => set((s) => ({ caps: s.caps.filter((c) => c.id !== id) })),
 
   assign: (id, cat, splitWith) =>
     set((s) => ({
@@ -134,3 +161,10 @@ export const useStore = create<StoreState>((set, get) => ({
   finishOnboarding: () => set({ onboardingDone: true }),
   replayOnboarding: () => set({ onboardingDone: false }),
 }));
+
+export function useBudgetCfg(): BudgetCfg {
+  const mode = useStore((s) => s.mode);
+  const income = useStore((s) => s.income[s.mode]);
+  const bills = useStore((s) => s.bills);
+  return cfg(mode, income, billsTotalFor(bills, mode));
+}

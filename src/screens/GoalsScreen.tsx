@@ -4,7 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { colors, font, money } from '../theme';
 import { PushedHeader } from '../components/Headers';
 import { Kicker } from '../components/ui';
-import { useStore } from '../store/useStore';
+import { useStore, useBudgetCfg } from '../store/useStore';
 import { allowance, spentToday } from '../store/selectors';
 import { SWEEPS } from '../data/mock';
 import { RootStackParamList } from '../navigation/types';
@@ -19,7 +19,8 @@ export function GoalsScreen({ navigation }: Props) {
   const addGoal = useStore((s) => s.addGoal);
   const removeGoal = useStore((s) => s.removeGoal);
 
-  const budget = allowance(tx, mode, demoEmpty);
+  const c = useBudgetCfg();
+  const budget = allowance(tx, mode, demoEmpty, c);
   const spent = spentToday(tx, mode, demoEmpty);
   const left = budget - spent;
   const sweepStr = left > 0 ? money(left) : 'nothing yet';

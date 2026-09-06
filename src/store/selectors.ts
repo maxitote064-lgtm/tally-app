@@ -1,11 +1,22 @@
-import { Category, Transaction } from '../data/mock';
+import { Bill, Category, Transaction } from '../data/mock';
 
 export type Mode = 'me' | 'us';
 
-export function cfg(mode: Mode) {
+export interface BudgetCfg {
+  income: number;
+  bills: number;
+  label: string;
+  who: string;
+}
+
+export function billsTotalFor(bills: Bill[], mode: Mode): number {
+  return bills.reduce((a, b) => a + (mode === 'us' ? b.householdAmount : b.personalAmount), 0);
+}
+
+export function cfg(mode: Mode, income: number, billsTotal: number): BudgetCfg {
   return mode === 'us'
-    ? { income: 21500, bills: 8172.3, label: 'Household', who: 'Household income' }
-    : { income: 12800, bills: 4156.15, label: 'Personal', who: 'Your monthly income' };
+    ? { income, bills: billsTotal, label: 'Household', who: 'Household income' }
+    : { income, bills: billsTotal, label: 'Personal', who: 'Your monthly income' };
 }
 
 export function visibleTx(tx: Transaction[], mode: Mode, demoEmpty: boolean): Transaction[] {
@@ -33,13 +44,12 @@ export function spentBeforeToday(tx: Transaction[], mode: Mode, demoEmpty: boole
   return monthSpent(tx, mode, demoEmpty) - spentToday(tx, mode, demoEmpty);
 }
 
-export function remainder(tx: Transaction[], mode: Mode, demoEmpty: boolean): number {
-  const c = cfg(mode);
+export function remainder(tx: Transaction[], mode: Mode, demoEmpty: boolean, c: BudgetCfg): number {
   return Math.max(120, c.income - c.bills - spentBeforeToday(tx, mode, demoEmpty));
 }
 
-export function allowance(tx: Transaction[], mode: Mode, demoEmpty: boolean): number {
-  return Math.max(20, Math.round(remainder(tx, mode, demoEmpty) / 6));
+export function allowance(tx: Transaction[], mode: Mode, demoEmpty: boolean, c: BudgetCfg): number {
+  return Math.max(20, Math.round(remainder(tx, mode, demoEmpty, c) / 6));
 }
 
 export function catMeta(t: Transaction): { label: string; color: 'need' | 'set' } {

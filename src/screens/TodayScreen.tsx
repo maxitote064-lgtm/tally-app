@@ -6,8 +6,8 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { colors, font, money } from '../theme';
 import { RootHeader } from '../components/Headers';
 import { Btn, Divider, Kicker, Section } from '../components/ui';
-import { useStore } from '../store/useStore';
-import { allowance, cfg, catMeta, spentToday, todayTx } from '../store/selectors';
+import { useStore, useBudgetCfg } from '../store/useStore';
+import { allowance, catMeta, spentToday, todayTx } from '../store/selectors';
 import { SwipeCard } from '../components/SwipeCard';
 import { RootStackParamList, TabParamList } from '../navigation/types';
 
@@ -25,8 +25,8 @@ export function TodayScreen({ navigation }: Props) {
   const demoEmpty = useStore((s) => s.demoEmpty);
   const simulate = useStore((s) => s.simulate);
 
-  const c = cfg(mode);
-  const budget = allowance(tx, mode, demoEmpty);
+  const c = useBudgetCfg();
+  const budget = allowance(tx, mode, demoEmpty, c);
   const spent = spentToday(tx, mode, demoEmpty);
   const today = todayTx(tx, mode, demoEmpty);
   const left = budget - spent;

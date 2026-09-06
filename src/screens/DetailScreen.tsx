@@ -4,8 +4,8 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { colors, font, money } from '../theme';
 import { PushedHeader } from '../components/Headers';
 import { Kicker } from '../components/ui';
-import { useStore } from '../store/useStore';
-import { allowance, catMeta, cfg, spentToday } from '../store/selectors';
+import { useStore, useBudgetCfg } from '../store/useStore';
+import { allowance, catMeta, spentToday } from '../store/selectors';
 import { CATEGORIES } from '../data/mock';
 import { SplitRatioBar } from '../components/SplitRatioBar';
 import { RootStackParamList } from '../navigation/types';
@@ -23,6 +23,7 @@ export function DetailScreen({ route, navigation }: Props) {
   const openSplit = useStore((s) => s.openSplit);
   const setSplitRatio = useStore((s) => s.setSplitRatio);
   const commitSplit = useStore((s) => s.commitSplit);
+  const c = useBudgetCfg();
 
   const t = tx.find((x) => x.id === txId);
   if (!t) {
@@ -34,7 +35,7 @@ export function DetailScreen({ route, navigation }: Props) {
   }
 
   const m = catMeta(t);
-  const budget = allowance(tx, mode, demoEmpty);
+  const budget = allowance(tx, mode, demoEmpty, c);
   const spent = spentToday(tx, mode, demoEmpty);
   const splitOpen = split?.txId === t.id;
 

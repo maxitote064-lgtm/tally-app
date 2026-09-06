@@ -6,8 +6,8 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { colors, font, money } from '../theme';
 import { RootHeader } from '../components/Headers';
 import { Kicker } from '../components/ui';
-import { useStore } from '../store/useStore';
-import { catMeta, cfg, filterTx, FILTERS } from '../store/selectors';
+import { useStore, useBudgetCfg } from '../store/useStore';
+import { catMeta, filterTx, FILTERS } from '../store/selectors';
 import { DAY_LABELS } from '../data/mock';
 import { RootStackParamList, TabParamList } from '../navigation/types';
 
@@ -24,7 +24,7 @@ export function ActivityScreen({ navigation }: Props) {
   const filter = useStore((s) => s.filter);
   const setFilter = useStore((s) => s.setFilter);
 
-  const c = cfg(mode);
+  const c = useBudgetCfg();
   const filtered = filterTx(tx, mode, demoEmpty, filter as any);
 
   const groups = useMemo(
