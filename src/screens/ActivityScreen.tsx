@@ -1,12 +1,13 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { CompositeScreenProps } from '@react-navigation/native';
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { colors, font, money } from '../theme';
+import { colors, font } from '../theme';
 import { RootHeader } from '../components/Headers';
 import { Kicker } from '../components/ui';
-import { useStore, useBudgetCfg } from '../store/useStore';
+import { AddTransactionModal } from '../components/AddTransactionModal';
+import { useStore, useBudgetCfg, useMoney } from '../store/useStore';
 import { catMeta, filterTx, FILTERS } from '../store/selectors';
 import { DAY_LABELS } from '../data/mock';
 import { RootStackParamList, TabParamList } from '../navigation/types';
@@ -25,6 +26,8 @@ export function ActivityScreen({ navigation }: Props) {
   const setFilter = useStore((s) => s.setFilter);
 
   const c = useBudgetCfg();
+  const money = useMoney();
+  const [adding, setAdding] = useState(false);
   const filtered = filterTx(tx, mode, demoEmpty, filter as any);
 
   const groups = useMemo(
@@ -56,6 +59,10 @@ export function ActivityScreen({ navigation }: Props) {
           <View style={styles.searchDot} />
           <Text style={styles.searchText}>Search merchant, category, amount</Text>
         </View>
+
+        <Pressable style={styles.addBtn} onPress={() => setAdding(true)}>
+          <Text style={styles.addBtnText}>+ Add a charge</Text>
+        </Pressable>
 
         <View style={styles.filterRow}>
           {FILTERS.map((f) => {
@@ -100,6 +107,7 @@ export function ActivityScreen({ navigation }: Props) {
           </View>
         ))}
       </ScrollView>
+      <AddTransactionModal visible={adding} onClose={() => setAdding(false)} />
     </View>
   );
 }
@@ -108,6 +116,8 @@ const styles = StyleSheet.create({
   search: { flexDirection: 'row', alignItems: 'center', gap: 9, borderWidth: 1, borderColor: 'rgba(32,30,29,.3)', paddingVertical: 11, paddingHorizontal: 12 },
   searchDot: { width: 11, height: 11, borderRadius: 9, borderWidth: 2, borderColor: 'rgba(32,30,29,.4)' },
   searchText: { fontFamily: font.regular, fontSize: 13, color: 'rgba(32,30,29,.45)' },
+  addBtn: { borderWidth: 1, borderColor: 'rgba(32,30,29,.35)', paddingVertical: 11, alignItems: 'center' },
+  addBtnText: { fontFamily: font.extrabold, fontSize: 11, letterSpacing: 0.6, textTransform: 'uppercase', color: colors.ink },
   filterRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   filterChip: { borderWidth: 1, paddingVertical: 8, paddingHorizontal: 10 },
   filterText: { fontFamily: font.semibold, fontSize: 11.5 },

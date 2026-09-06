@@ -1,8 +1,8 @@
 import React, { useRef, useState } from 'react';
 import { Animated, PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, font, money } from '../theme';
+import { colors, font } from '../theme';
 import { CATEGORIES, Transaction } from '../data/mock';
-import { useStore } from '../store/useStore';
+import { useStore, useMoney } from '../store/useStore';
 import { SplitRatioBar } from './SplitRatioBar';
 
 export function SwipeCard({ t }: { t: Transaction }) {
@@ -15,6 +15,7 @@ export function SwipeCard({ t }: { t: Transaction }) {
   const setSplitCat = useStore((s) => s.setSplitCat);
   const cancelSplit = useStore((s) => s.cancelSplit);
   const commitSplit = useStore((s) => s.commitSplit);
+  const money = useMoney();
 
   const pickerOpen = pickerTxId === t.id;
   const splitOpen = split?.txId === t.id;

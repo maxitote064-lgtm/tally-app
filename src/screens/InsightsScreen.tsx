@@ -3,10 +3,10 @@ import { CompositeScreenProps } from '@react-navigation/native';
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { colors, font, money, CAT_COLORS } from '../theme';
+import { colors, font, CAT_COLORS } from '../theme';
 import { RootHeader } from '../components/Headers';
 import { Kicker } from '../components/ui';
-import { useStore, useBudgetCfg } from '../store/useStore';
+import { useStore, useBudgetCfg, useMoney } from '../store/useStore';
 import { monthSpent, visibleTx } from '../store/selectors';
 import { CATEGORIES, RECURRING } from '../data/mock';
 import { RootStackParamList, TabParamList } from '../navigation/types';
@@ -24,6 +24,7 @@ export function InsightsScreen({ navigation }: Props) {
   const hasGoal = useStore((s) => s.hasGoal);
 
   const c = useBudgetCfg();
+  const money = useMoney();
   const mSpent = monthSpent(tx, mode, demoEmpty);
   const visible = visibleTx(tx, mode, demoEmpty);
   const monthBaseVal = mode === 'us' ? 6400 : 3200;

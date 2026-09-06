@@ -1,11 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { colors, font, money } from '../theme';
+import { colors, font } from '../theme';
 import { PushedHeader } from '../components/Headers';
 import { Kicker } from '../components/ui';
-import { useStore, useBudgetCfg } from '../store/useStore';
+import { EditFieldsModal } from '../components/EditFieldsModal';
+import { useStore, useBudgetCfg, useCurrency, useMoney } from '../store/useStore';
 import { allowance, catMeta, spentToday } from '../store/selectors';
+import { toNumber } from '../utils/number';
 import { CATEGORIES } from '../data/mock';
 import { SplitRatioBar } from '../components/SplitRatioBar';
 import { RootStackParamList } from '../navigation/types';
@@ -23,7 +25,12 @@ export function DetailScreen({ route, navigation }: Props) {
   const openSplit = useStore((s) => s.openSplit);
   const setSplitRatio = useStore((s) => s.setSplitRatio);
   const commitSplit = useStore((s) => s.commitSplit);
+  const updateTransaction = useStore((s) => s.updateTransaction);
+  const removeTransaction = useStore((s) => s.removeTransaction);
   const c = useBudgetCfg();
+  const currency = useCurrency();
+  const money = useMoney();
+  const [editingCharge, setEditingCharge] = useState(false);
 
   const t = tx.find((x) => x.id === txId);
   if (!t) {
@@ -43,7 +50,7 @@ export function DetailScreen({ route, navigation }: Props) {
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <PushedHeader kicker="Charge" title="Detail" onClose={() => navigation.goBack()} />
       <ScrollView contentContainerStyle={{ paddingBottom: 26 }}>
-        <View style={styles.section}>
+        <Pressable style={styles.section} onPress={() => setEditingCharge(true)}>
           <View style={styles.headRow}>
             <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
               <Text style={styles.merchant}>{t.merchant}</Text>
@@ -60,8 +67,9 @@ export function DetailScreen({ route, navigation }: Props) {
             <View style={styles.tagOutline}>
               <Text style={styles.tagOutlineText}>{t.joint ? 'Joint' : t.owner === 'bia' ? 'Bia' : 'Personal'}</Text>
             </View>
+            <Text style={styles.tapHint}>tap to edit merchant / amount</Text>
           </View>
-        </View>
+        </Pressable>
 
         <View style={styles.section}>
           <Kicker>Category</Kicker>
@@ -124,8 +132,31 @@ export function DetailScreen({ route, navigation }: Props) {
           <Pressable style={styles.wideOutline} onPress={() => navigation.goBack()}>
             <Text style={[styles.wideOutlineText, { color: colors.redDark }]}>Not mine — dispute this charge</Text>
           </Pressable>
+          <Pressable
+            style={styles.wideOutline}
+            onPress={() => {
+              removeTransaction(t.id);
+              navigation.goBack();
+            }}
+          >
+            <Text style={[styles.wideOutlineText, { color: colors.redDark }]}>Delete this charge</Text>
+          </Pressable>
         </View>
       </ScrollView>
+
+      <EditFieldsModal
+        visible={editingCharge}
+        title="Edit charge"
+        fields={[
+          { key: 'merchant', label: 'Merchant', value: t.merchant },
+          { key: 'amount', label: `Amount (${currency.symbol})`, value: String(t.amount), keyboardType: 'decimal-pad' },
+        ]}
+        onCancel={() => setEditingCharge(false)}
+        onSave={(v) => {
+          updateTransaction(t.id, { merchant: v.merchant || t.merchant, amount: toNumber(v.amount) });
+          setEditingCharge(false);
+        }}
+      />
     </View>
   );
 }
@@ -136,11 +167,12 @@ const styles = StyleSheet.create({
   merchant: { fontFamily: font.extrabold, fontSize: 19, letterSpacing: -0.3, color: colors.ink },
   meta: { fontFamily: font.regular, fontSize: 11.5, color: 'rgba(32,30,29,.55)' },
   amount: { fontFamily: font.extrabold, fontSize: 40, letterSpacing: -0.5, color: colors.ink },
-  tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
+  tagRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 7 },
   tag: { paddingVertical: 6, paddingHorizontal: 8 },
   tagText: { fontFamily: font.extrabold, fontSize: 10, letterSpacing: 0.5, textTransform: 'uppercase', color: colors.white },
   tagOutline: { paddingVertical: 6, paddingHorizontal: 8, borderWidth: 1, borderColor: 'rgba(32,30,29,.3)' },
   tagOutlineText: { fontFamily: font.extrabold, fontSize: 10, letterSpacing: 0.5, textTransform: 'uppercase', color: 'rgba(32,30,29,.6)' },
+  tapHint: { fontFamily: font.regular, fontSize: 10.5, color: 'rgba(32,30,29,.4)' },
   catGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   catBtn: { width: '48.5%', borderWidth: 1, paddingVertical: 11, paddingHorizontal: 11 },
   catBtnText: { fontFamily: font.semibold, fontSize: 13 },

@@ -55,7 +55,28 @@ export const CAT_COLORS: Record<string, string> = {
   Bills: 'rgba(32,30,29,.25)',
 };
 
+export interface CurrencyOption {
+  code: string;
+  symbol: string;
+  locale: string;
+  name: string;
+}
+
+export const CURRENCIES: CurrencyOption[] = [
+  { code: 'BRL', symbol: 'R$', locale: 'pt-BR', name: 'Brazilian Real' },
+  { code: 'USD', symbol: '$', locale: 'en-US', name: 'US Dollar' },
+  { code: 'EUR', symbol: '€', locale: 'de-DE', name: 'Euro' },
+  { code: 'GBP', symbol: '£', locale: 'en-GB', name: 'British Pound' },
+  { code: 'MXN', symbol: '$', locale: 'es-MX', name: 'Mexican Peso' },
+  { code: 'ARS', symbol: '$', locale: 'es-AR', name: 'Argentine Peso' },
+];
+
+export function formatMoney(n: number, currency: CurrencyOption, dp: number = 2): string {
+  const v = n.toLocaleString(currency.locale, { minimumFractionDigits: dp, maximumFractionDigits: dp });
+  return `${currency.symbol} ${v}`;
+}
+
+/** @deprecated kept for anything not yet wired to useMoney(); always formats as BRL. */
 export function money(n: number, dp: number = 2): string {
-  const v = n.toLocaleString('pt-BR', { minimumFractionDigits: dp, maximumFractionDigits: dp });
-  return `R$ ${v}`;
+  return formatMoney(n, CURRENCIES[0], dp);
 }

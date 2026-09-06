@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { colors, font, money } from '../theme';
+import { colors, font, CURRENCIES } from '../theme';
 import { PushedHeader } from '../components/Headers';
 import { Kicker } from '../components/ui';
-import { useStore, useBudgetCfg } from '../store/useStore';
+import { OptionPickerModal } from '../components/OptionPickerModal';
+import { useStore, useBudgetCfg, useCurrency, useMoney } from '../store/useStore';
 import { allowance } from '../store/selectors';
 import { CARDS } from '../data/mock';
 import { RootStackParamList } from '../navigation/types';
@@ -18,9 +19,14 @@ export function SettingsScreen({ navigation }: Props) {
   const demoEmpty = useStore((s) => s.demoEmpty);
   const hasGoal = useStore((s) => s.hasGoal);
   const replayOnboarding = useStore((s) => s.replayOnboarding);
+  const setCurrency = useStore((s) => s.setCurrency);
+  const currency = useCurrency();
 
   const c = useBudgetCfg();
+  const money = useMoney();
   const budget = allowance(tx, mode, demoEmpty, c);
+
+  const [pickingCurrency, setPickingCurrency] = useState(false);
 
   const rows: { name: string; hint: string; go: () => void }[] = [
     { name: 'Household — you and Bia', hint: mode === 'us' ? 'joint view on' : 'off', go: () => setMode('us') },
@@ -28,6 +34,7 @@ export function SettingsScreen({ navigation }: Props) {
     { name: 'Goals', hint: hasGoal ? 'card ·· 8802' : 'none', go: () => navigation.navigate('Goals') },
     { name: 'Notifications & nudges', hint: '3 on', go: () => navigation.navigate('Notifications') },
     { name: 'Categories', hint: '6 in use', go: () => navigation.navigate('Budget') },
+    { name: 'Currency', hint: `${currency.symbol} ${currency.code}`, go: () => setPickingCurrency(true) },
     {
       name: 'Replay onboarding',
       hint: '5 steps',
@@ -73,6 +80,18 @@ export function SettingsScreen({ navigation }: Props) {
           </Text>
         </View>
       </ScrollView>
+
+      <OptionPickerModal
+        visible={pickingCurrency}
+        title="Currency"
+        selectedKey={currency.code}
+        options={CURRENCIES.map((cur) => ({ key: cur.code, label: `${cur.symbol}  ${cur.name}`, sublabel: cur.code }))}
+        onSelect={(code) => {
+          setCurrency(code);
+          setPickingCurrency(false);
+        }}
+        onCancel={() => setPickingCurrency(false)}
+      />
     </View>
   );
 }

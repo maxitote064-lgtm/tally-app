@@ -1,10 +1,10 @@
 import React from 'react';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { colors, font, money } from '../theme';
+import { colors, font } from '../theme';
 import { PushedHeader } from '../components/Headers';
 import { Kicker } from '../components/ui';
-import { useStore, useBudgetCfg } from '../store/useStore';
+import { useStore, useBudgetCfg, useMoney } from '../store/useStore';
 import { allowance, spentToday } from '../store/selectors';
 import { SWEEPS } from '../data/mock';
 import { RootStackParamList } from '../navigation/types';
@@ -20,6 +20,7 @@ export function GoalsScreen({ navigation }: Props) {
   const removeGoal = useStore((s) => s.removeGoal);
 
   const c = useBudgetCfg();
+  const money = useMoney();
   const budget = allowance(tx, mode, demoEmpty, c);
   const spent = spentToday(tx, mode, demoEmpty);
   const left = budget - spent;

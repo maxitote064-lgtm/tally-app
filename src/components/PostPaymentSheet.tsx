@@ -1,8 +1,8 @@
 import React from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, font, money } from '../theme';
-import { useStore, useBudgetCfg } from '../store/useStore';
+import { colors, font } from '../theme';
+import { useStore, useBudgetCfg, useMoney } from '../store/useStore';
 import { allowance, spentToday } from '../store/selectors';
 import { CATEGORIES, CATEGORY_HINTS } from '../data/mock';
 
@@ -16,6 +16,7 @@ export function PostPaymentSheet() {
   const insets = useSafeAreaInsets();
 
   const c = useBudgetCfg();
+  const money = useMoney();
   const p = sheet.pending;
   const budget = allowance(tx, mode, demoEmpty, c);
   const spent = spentToday(tx, mode, demoEmpty);

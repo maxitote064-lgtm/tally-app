@@ -18,7 +18,11 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 function Tabs() {
   return (
-    <Tab.Navigator screenOptions={{ headerShown: false }} tabBar={(props) => <CustomTabBar {...props} />}>
+    <Tab.Navigator
+      screenOptions={{ headerShown: false }}
+      tabBar={(props) => <CustomTabBar {...props} />}
+      detachInactiveScreens
+    >
       <Tab.Screen name="Today" component={TodayScreen} options={{ title: 'Today' }} />
       <Tab.Screen name="Activity" component={ActivityScreen} options={{ title: 'Activity' }} />
       <Tab.Screen name="Insights" component={InsightsScreen} options={{ title: 'Insights' }} />

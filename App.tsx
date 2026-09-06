@@ -1,9 +1,12 @@
 import React, { useCallback } from 'react';
+import { enableScreens } from 'react-native-screens';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { View } from 'react-native';
+
+enableScreens();
 import {
   useFonts,
   Archivo_400Regular,

@@ -1,20 +1,16 @@
 import React, { useState } from 'react';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { colors, font, money } from '../theme';
+import { colors, font } from '../theme';
 import { PushedHeader } from '../components/Headers';
 import { Kicker } from '../components/ui';
 import { EditFieldsModal } from '../components/EditFieldsModal';
-import { useStore, useBudgetCfg } from '../store/useStore';
+import { useStore, useBudgetCfg, useCurrency, useMoney } from '../store/useStore';
 import { remainder, spentBeforeToday } from '../store/selectors';
+import { toNumber } from '../utils/number';
 import { RootStackParamList } from '../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Budget'>;
-
-function toNumber(s: string): number {
-  const n = parseFloat(s.replace(/\./g, '').replace(',', '.').replace(/[^0-9.-]/g, ''));
-  return Number.isFinite(n) ? n : 0;
-}
 
 export function BudgetScreen({ navigation }: Props) {
   const mode = useStore((s) => s.mode);
@@ -29,6 +25,9 @@ export function BudgetScreen({ navigation }: Props) {
   const addCap = useStore((s) => s.addCap);
   const updateCap = useStore((s) => s.updateCap);
   const removeCap = useStore((s) => s.removeCap);
+  const currency = useCurrency();
+  const money = useMoney();
+  const parseAmount = (s: string) => toNumber(s);
 
   const c = useBudgetCfg();
   const rem = remainder(tx, mode, demoEmpty, c);
@@ -146,10 +145,10 @@ export function BudgetScreen({ navigation }: Props) {
         key={editingIncome ? `income-${mode}` : 'income-closed'}
         visible={editingIncome}
         title={c.who}
-        fields={[{ key: 'value', label: 'Monthly amount (R$)', value: String(c.income), keyboardType: 'decimal-pad' }]}
+        fields={[{ key: 'value', label: `Monthly amount (${currency.symbol})`, value: String(c.income), keyboardType: 'decimal-pad' }]}
         onCancel={() => setEditingIncome(false)}
         onSave={(v) => {
-          setIncome(mode, toNumber(v.value));
+          setIncome(mode, parseAmount(v.value));
           setEditingIncome(false);
         }}
       />
@@ -160,16 +159,16 @@ export function BudgetScreen({ navigation }: Props) {
         title={editingBill ? 'Edit bill' : 'Add a bill'}
         fields={[
           { key: 'name', label: 'Name', value: editingBill?.name ?? '', placeholder: 'e.g. Internet' },
-          { key: 'personalAmount', label: 'Personal amount (R$)', value: editingBill ? String(editingBill.personalAmount) : '', keyboardType: 'decimal-pad' },
-          { key: 'householdAmount', label: 'Household amount (R$)', value: editingBill ? String(editingBill.householdAmount) : '', keyboardType: 'decimal-pad' },
+          { key: 'personalAmount', label: `Personal amount (${currency.symbol})`, value: editingBill ? String(editingBill.personalAmount) : '', keyboardType: 'decimal-pad' },
+          { key: 'householdAmount', label: `Household amount (${currency.symbol})`, value: editingBill ? String(editingBill.householdAmount) : '', keyboardType: 'decimal-pad' },
           { key: 'due', label: 'Due note', value: editingBill?.due ?? '', placeholder: 'e.g. due 5th' },
         ]}
         onCancel={() => setEditingBillId(null)}
         onSave={(v) => {
           const patch = {
             name: v.name || 'Bill',
-            personalAmount: toNumber(v.personalAmount),
-            householdAmount: toNumber(v.householdAmount),
+            personalAmount: parseAmount(v.personalAmount),
+            householdAmount: parseAmount(v.householdAmount),
             due: v.due || '',
           };
           if (editingBill) updateBill(editingBill.id, patch);
@@ -185,12 +184,12 @@ export function BudgetScreen({ navigation }: Props) {
         title={editingCap ? 'Edit category cap' : 'Add a category cap'}
         fields={[
           { key: 'name', label: 'Category', value: editingCap?.name ?? '', placeholder: 'e.g. Groceries' },
-          { key: 'used', label: 'Spent so far (R$)', value: editingCap ? String(editingCap.used) : '0', keyboardType: 'decimal-pad' },
-          { key: 'cap', label: 'Monthly cap (R$)', value: editingCap ? String(editingCap.cap) : '', keyboardType: 'decimal-pad' },
+          { key: 'used', label: `Spent so far (${currency.symbol})`, value: editingCap ? String(editingCap.used) : '0', keyboardType: 'decimal-pad' },
+          { key: 'cap', label: `Monthly cap (${currency.symbol})`, value: editingCap ? String(editingCap.cap) : '', keyboardType: 'decimal-pad' },
         ]}
         onCancel={() => setEditingCapId(null)}
         onSave={(v) => {
-          const patch = { name: v.name || 'Category', used: toNumber(v.used), cap: Math.max(1, toNumber(v.cap)) };
+          const patch = { name: v.name || 'Category', used: parseAmount(v.used), cap: Math.max(1, parseAmount(v.cap)) };
           if (editingCap) updateCap(editingCap.id, patch);
           else addCap(patch);
           setEditingCapId(null);
