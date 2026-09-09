@@ -4,30 +4,44 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { colors, font } from '../theme';
 import { PushedHeader } from '../components/Headers';
 import { Kicker } from '../components/ui';
-import { useStore } from '../store/useStore';
+import { useStore, useLang, useMoney, useT } from '../store/useStore';
 import { NUDGE_DEFS, NUDGE_LOG } from '../data/mock';
+import { weekdayShort } from '../i18n/calendar';
+import { Key } from '../i18n/translations';
 import { RootStackParamList } from '../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Notifications'>;
 
+const LOG_WD = [0, 6, 5];
+const LOG_TIME = ['20:14', '18:02', '17:41'];
+const LOG_KEYS: { kicker: Key; body: Key }[] = [
+  { kicker: 'notif_log_overToday_kicker', body: 'notif_log_overToday_body' },
+  { kicker: 'notif_log_unfiled_kicker', body: 'notif_log_unfiled_body' },
+  { kicker: 'notif_log_partner_kicker', body: 'notif_log_partner_body' },
+];
+const LOG_AMOUNTS = [42, 0, 261];
+
 export function NotificationsScreen({ navigation }: Props) {
   const nudges = useStore((s) => s.nudges);
   const toggleNudge = useStore((s) => s.toggleNudge);
+  const t = useT();
+  const lang = useLang();
+  const money = useMoney();
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <PushedHeader kicker="Nudges" title="Notifications" onClose={() => navigation.goBack()} />
+      <PushedHeader kicker={t('notif_kicker')} title={t('notif_title')} onClose={() => navigation.goBack()} />
       <ScrollView contentContainerStyle={{ paddingBottom: 26 }}>
         <View style={styles.section}>
-          <Kicker>What gets a push</Kicker>
+          <Kicker>{t('notif_whatGetsPush')}</Kicker>
           <View style={{ marginTop: 4 }}>
             {NUDGE_DEFS.map((n) => {
               const on = nudges[n.key];
               return (
                 <Pressable key={n.key} onPress={() => toggleNudge(n.key)} style={styles.row}>
                   <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
-                    <Text style={styles.name}>{n.name}</Text>
-                    <Text style={styles.desc}>{n.desc}</Text>
+                    <Text style={styles.name}>{t(`notif_${n.key}_name` as Key)}</Text>
+                    <Text style={styles.desc}>{t(`notif_${n.key}_desc` as Key)}</Text>
                   </View>
                   <View style={[styles.track, { backgroundColor: on ? colors.red : colors.track, justifyContent: on ? 'flex-end' : 'flex-start' }]}>
                     <View style={[styles.knob, { backgroundColor: on ? colors.white : 'rgba(32,30,29,.55)' }]} />
@@ -36,19 +50,21 @@ export function NotificationsScreen({ navigation }: Props) {
               );
             })}
           </View>
-          <Text style={styles.footnote}>Everything else stays silent — the charge simply appears in Today, unfiled.</Text>
+          <Text style={styles.footnote}>{t('notif_silentFootnote')}</Text>
         </View>
 
         <View style={[styles.section, { borderBottomWidth: 0 }]}>
-          <Kicker>Recent</Kicker>
+          <Kicker>{t('notif_recent')}</Kicker>
           <View style={{ gap: 11, marginTop: 11 }}>
-            {NUDGE_LOG.map((l) => (
+            {NUDGE_LOG.map((l, i) => (
               <View key={l.kicker + l.when} style={[styles.logCard, { backgroundColor: l.warn ? '#fff2ef' : 'transparent' }]}>
                 <View style={styles.logHead}>
-                  <Text style={[styles.logKicker, { color: l.warn ? colors.redDark : colors.ink }]}>{l.kicker}</Text>
-                  <Text style={styles.logWhen}>{l.when}</Text>
+                  <Text style={[styles.logKicker, { color: l.warn ? colors.redDark : colors.ink }]}>{t(LOG_KEYS[i].kicker)}</Text>
+                  <Text style={styles.logWhen}>
+                    {weekdayShort(lang, LOG_WD[i])} {LOG_TIME[i]}
+                  </Text>
                 </View>
-                <Text style={styles.logBody}>{l.body}</Text>
+                <Text style={styles.logBody}>{t(LOG_KEYS[i].body, { amount: money(LOG_AMOUNTS[i] ?? 0) })}</Text>
               </View>
             ))}
           </View>

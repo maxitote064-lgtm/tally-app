@@ -4,6 +4,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Bill, Cap, Category, DEFAULT_BILLS, DEFAULT_CAPS, IncomingCharge, INCOMING, SEED_TX, Transaction } from '../data/mock';
 import { billsTotalFor, cfg, BudgetCfg, Mode } from './selectors';
 import { CURRENCIES, CurrencyOption, formatMoney } from '../theme';
+import { Key, Lang, TRANSLATIONS } from '../i18n/translations';
+import { CATEGORY_KEYS } from '../i18n/categories';
 
 interface SplitState {
   txId: number;
@@ -47,9 +49,11 @@ interface StoreState {
   nextBillId: number;
   nextCapId: number;
   currencyCode: string;
+  language: Lang;
 
   setMode: (mode: Mode) => void;
   setCurrency: (code: string) => void;
+  setLanguage: (lang: Lang) => void;
   setIncome: (mode: Mode, value: number) => void;
   addBill: (bill: Omit<Bill, 'id'>) => void;
   updateBill: (id: string, patch: Partial<Omit<Bill, 'id'>>) => void;
@@ -101,9 +105,11 @@ export const useStore = create<StoreState>()(
       nextBillId: DEFAULT_BILLS.length + 1,
       nextCapId: DEFAULT_CAPS.length + 1,
       currencyCode: 'BRL',
+      language: 'en',
 
       setMode: (mode) => set({ mode }),
       setCurrency: (code) => set({ currencyCode: code }),
+      setLanguage: (lang) => set({ language: lang }),
       setIncome: (mode, value) => set((s) => ({ income: { ...s.income, [mode]: Math.max(0, value) } })),
 
       addBill: (bill) =>
@@ -231,4 +237,36 @@ export function useCurrency(): CurrencyOption {
 export function useMoney(): (n: number, dp?: number) => string {
   const currency = useCurrency();
   return (n: number, dp: number = 2) => formatMoney(n, currency, dp);
+}
+
+export function useLang(): Lang {
+  return useStore((s) => s.language);
+}
+
+export function useT(): (key: Key, vars?: Record<string, string | number>) => string {
+  const lang = useLang();
+  return (key, vars) => {
+    let str = TRANSLATIONS[lang][key] ?? TRANSLATIONS.en[key] ?? key;
+    if (vars) {
+      for (const [k, v] of Object.entries(vars)) {
+        str = str.replace(`{${k}}`, String(v));
+      }
+    }
+    return str;
+  };
+}
+
+export function useCategoryLabel(): (cat: Category | null | undefined) => string {
+  const t = useT();
+  return (cat) => (cat ? t(CATEGORY_KEYS[cat]) : '');
+}
+
+export function useCatMeta(): (tx: Transaction) => { label: string; color: 'need' | 'set' } {
+  const t = useT();
+  const catLabel = useCategoryLabel();
+  return (tx) => {
+    if (!tx.cat) return { label: t('today_needsCategory'), color: 'need' };
+    if (tx.splitWith) return { label: `${catLabel(tx.cat)} + ${catLabel(tx.splitWith)}`, color: 'set' };
+    return { label: catLabel(tx.cat), color: 'set' };
+  };
 }

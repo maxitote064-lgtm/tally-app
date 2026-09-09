@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font } from '../theme';
+import { useT } from '../store/useStore';
 
 export interface EditField {
   key: string;
@@ -18,7 +19,7 @@ export function EditFieldsModal({
   onCancel,
   onSave,
   onDelete,
-  deleteLabel = 'Delete',
+  deleteLabel,
 }: {
   visible: boolean;
   title: string;
@@ -29,6 +30,7 @@ export function EditFieldsModal({
   deleteLabel?: string;
 }) {
   const insets = useSafeAreaInsets();
+  const t = useT();
   const [values, setValues] = useState<Record<string, string>>(() =>
     Object.fromEntries(fields.map((f) => [f.key, f.value]))
   );
@@ -66,15 +68,15 @@ export function EditFieldsModal({
           </ScrollView>
           <View style={styles.btnRow}>
             <Pressable style={styles.saveBtn} onPress={() => onSave(values)}>
-              <Text style={styles.saveBtnText}>Save</Text>
+              <Text style={styles.saveBtnText}>{t('save')}</Text>
             </Pressable>
             <Pressable style={styles.cancelBtn} onPress={onCancel}>
-              <Text style={styles.cancelBtnText}>Cancel</Text>
+              <Text style={styles.cancelBtnText}>{t('cancel')}</Text>
             </Pressable>
           </View>
           {onDelete && (
             <Pressable style={styles.deleteBtn} onPress={onDelete}>
-              <Text style={styles.deleteBtnText}>{deleteLabel}</Text>
+              <Text style={styles.deleteBtnText}>{deleteLabel ?? t('delete')}</Text>
             </Pressable>
           )}
         </View>

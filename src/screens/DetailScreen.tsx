@@ -5,10 +5,11 @@ import { colors, font } from '../theme';
 import { PushedHeader } from '../components/Headers';
 import { Kicker } from '../components/ui';
 import { EditFieldsModal } from '../components/EditFieldsModal';
-import { useStore, useBudgetCfg, useCurrency, useMoney } from '../store/useStore';
-import { allowance, catMeta, spentToday } from '../store/selectors';
+import { useCatMeta, useCategoryLabel, useLang, useStore, useBudgetCfg, useCurrency, useMoney, useT } from '../store/useStore';
+import { allowance, spentToday } from '../store/selectors';
 import { toNumber } from '../utils/number';
 import { CATEGORIES } from '../data/mock';
+import { weekdayShort, monthShort } from '../i18n/calendar';
 import { SplitRatioBar } from '../components/SplitRatioBar';
 import { RootStackParamList } from '../navigation/types';
 
@@ -30,82 +31,87 @@ export function DetailScreen({ route, navigation }: Props) {
   const c = useBudgetCfg();
   const currency = useCurrency();
   const money = useMoney();
+  const t = useT();
+  const lang = useLang();
+  const catLabel = useCategoryLabel();
+  const catMeta = useCatMeta();
   const [editingCharge, setEditingCharge] = useState(false);
 
-  const t = tx.find((x) => x.id === txId);
-  if (!t) {
+  const tx_ = tx.find((x) => x.id === txId);
+  if (!tx_) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.bg }}>
-        <PushedHeader kicker="Charge" title="Detail" onClose={() => navigation.goBack()} />
+        <PushedHeader kicker={t('detail_kicker')} title={t('detail_title')} onClose={() => navigation.goBack()} />
       </View>
     );
   }
 
-  const m = catMeta(t);
+  const m = catMeta(tx_);
   const budget = allowance(tx, mode, demoEmpty, c);
   const spent = spentToday(tx, mode, demoEmpty);
-  const splitOpen = split?.txId === t.id;
+  const splitOpen = split?.txId === tx_.id;
+  const dayLabel = `${weekdayShort(lang, 3)} 26 ${monthShort(lang, 7)}`;
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <PushedHeader kicker="Charge" title="Detail" onClose={() => navigation.goBack()} />
+      <PushedHeader kicker={t('detail_kicker')} title={t('detail_title')} onClose={() => navigation.goBack()} />
       <ScrollView contentContainerStyle={{ paddingBottom: 26 }}>
         <Pressable style={styles.section} onPress={() => setEditingCharge(true)}>
           <View style={styles.headRow}>
             <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
-              <Text style={styles.merchant}>{t.merchant}</Text>
+              <Text style={styles.merchant}>{tx_.merchant}</Text>
               <Text style={styles.meta}>
-                {t.time} · Wed 26 Aug · {t.method}
+                {tx_.time} · {dayLabel} · {tx_.method}
               </Text>
             </View>
-            <Text style={styles.amount}>{money(t.amount)}</Text>
+            <Text style={styles.amount}>{money(tx_.amount)}</Text>
           </View>
           <View style={styles.tagRow}>
-            <View style={[styles.tag, { backgroundColor: t.cat ? colors.ink : colors.red }]}>
+            <View style={[styles.tag, { backgroundColor: tx_.cat ? colors.ink : colors.red }]}>
               <Text style={styles.tagText}>{m.label}</Text>
             </View>
             <View style={styles.tagOutline}>
-              <Text style={styles.tagOutlineText}>{t.joint ? 'Joint' : t.owner === 'bia' ? 'Bia' : 'Personal'}</Text>
+              <Text style={styles.tagOutlineText}>{tx_.joint ? t('joint') : tx_.owner === 'bia' ? 'Bia' : t('personal')}</Text>
             </View>
-            <Text style={styles.tapHint}>tap to edit merchant / amount</Text>
+            <Text style={styles.tapHint}>{t('detail_tapToEdit')}</Text>
           </View>
         </Pressable>
 
         <View style={styles.section}>
-          <Kicker>Category</Kicker>
+          <Kicker>{t('detail_category')}</Kicker>
           <View style={styles.catGrid}>
-            {CATEGORIES.map((c) => {
-              const on = t.cat === c;
+            {CATEGORIES.map((cat) => {
+              const on = tx_.cat === cat;
               return (
                 <Pressable
-                  key={c}
-                  onPress={() => assign(t.id, c)}
+                  key={cat}
+                  onPress={() => assign(tx_.id, cat)}
                   style={[styles.catBtn, { borderColor: on ? colors.ink : 'rgba(32,30,29,.3)', backgroundColor: on ? colors.ink : colors.white }]}
                 >
-                  <Text style={[styles.catBtnText, { color: on ? colors.white : colors.ink }]}>{c}</Text>
+                  <Text style={[styles.catBtnText, { color: on ? colors.white : colors.ink }]}>{catLabel(cat)}</Text>
                 </Pressable>
               );
             })}
           </View>
           <Pressable
             style={styles.splitOpenBtn}
-            onPress={() => openSplit(t.id, t.cat ?? t.guess ?? 'Groceries', 'Household')}
+            onPress={() => openSplit(tx_.id, tx_.cat ?? tx_.guess ?? 'Groceries', 'Household')}
           >
-            <Text style={styles.splitOpenText}>Split between two categories</Text>
+            <Text style={styles.splitOpenText}>{t('detail_splitBetweenTwo')}</Text>
           </Pressable>
           {splitOpen && split && (
             <View style={styles.splitPanel}>
               <View style={styles.splitLabelsRow}>
                 <Text style={styles.splitLabelText}>
-                  {split.a} · {money((t.amount * split.ratio) / 100)}
+                  {catLabel(split.a)} · {money((tx_.amount * split.ratio) / 100)}
                 </Text>
                 <Text style={styles.splitLabelText}>
-                  {money((t.amount * (100 - split.ratio)) / 100)} · {split.b}
+                  {money((tx_.amount * (100 - split.ratio)) / 100)} · {catLabel(split.b)}
                 </Text>
               </View>
               <SplitRatioBar ratio={split.ratio} onChange={setSplitRatio} />
               <Pressable style={styles.saveBtn} onPress={commitSplit}>
-                <Text style={styles.saveBtnText}>Save split</Text>
+                <Text style={styles.saveBtnText}>{t('detail_saveSplit')}</Text>
               </Pressable>
             </View>
           )}
@@ -113,10 +119,10 @@ export function DetailScreen({ route, navigation }: Props) {
 
         <View style={styles.section}>
           {[
-            { k: 'Terminal', v: 'Tap-to-pay · contactless' },
-            { k: 'Card', v: t.method.replace('Wallet · ', '').replace('Autopay · ', '') },
-            { k: 'Counts toward', v: `Wed 26 Aug · ${money(budget, 0)} allowance` },
-            { k: 'Share of today', v: `${Math.round((t.amount / Math.max(spent, 1)) * 100)}%` },
+            { k: t('detail_terminal'), v: t('detail_tapToPayContactless') },
+            { k: t('detail_card'), v: tx_.method.replace('Wallet · ', '').replace('Autopay · ', '') },
+            { k: t('detail_countsToward'), v: t('detail_countsTowardValue', { day: dayLabel, amount: money(budget, 0) }) },
+            { k: t('detail_shareOfToday'), v: `${Math.round((tx_.amount / Math.max(spent, 1)) * 100)}%` },
           ].map((r) => (
             <View key={r.k} style={styles.metaRow}>
               <Text style={styles.metaKey}>{r.k}</Text>
@@ -126,34 +132,34 @@ export function DetailScreen({ route, navigation }: Props) {
         </View>
 
         <View style={{ paddingHorizontal: 20, paddingTop: 16, gap: 9 }}>
-          <Pressable style={styles.wideOutline} onPress={() => toggleJoint(t.id)}>
-            <Text style={styles.wideOutlineText}>{t.joint ? 'Make this personal again' : 'Mark as a joint charge'}</Text>
+          <Pressable style={styles.wideOutline} onPress={() => toggleJoint(tx_.id)}>
+            <Text style={styles.wideOutlineText}>{tx_.joint ? t('detail_makePersonal') : t('detail_markJoint')}</Text>
           </Pressable>
           <Pressable style={styles.wideOutline} onPress={() => navigation.goBack()}>
-            <Text style={[styles.wideOutlineText, { color: colors.redDark }]}>Not mine — dispute this charge</Text>
+            <Text style={[styles.wideOutlineText, { color: colors.redDark }]}>{t('detail_disputeCharge')}</Text>
           </Pressable>
           <Pressable
             style={styles.wideOutline}
             onPress={() => {
-              removeTransaction(t.id);
+              removeTransaction(tx_.id);
               navigation.goBack();
             }}
           >
-            <Text style={[styles.wideOutlineText, { color: colors.redDark }]}>Delete this charge</Text>
+            <Text style={[styles.wideOutlineText, { color: colors.redDark }]}>{t('detail_deleteCharge')}</Text>
           </Pressable>
         </View>
       </ScrollView>
 
       <EditFieldsModal
         visible={editingCharge}
-        title="Edit charge"
+        title={t('detail_editCharge')}
         fields={[
-          { key: 'merchant', label: 'Merchant', value: t.merchant },
-          { key: 'amount', label: `Amount (${currency.symbol})`, value: String(t.amount), keyboardType: 'decimal-pad' },
+          { key: 'merchant', label: t('detail_merchant'), value: tx_.merchant },
+          { key: 'amount', label: t('detail_amount', { symbol: currency.symbol }), value: String(tx_.amount), keyboardType: 'decimal-pad' },
         ]}
         onCancel={() => setEditingCharge(false)}
         onSave={(v) => {
-          updateTransaction(t.id, { merchant: v.merchant || t.merchant, amount: toNumber(v.amount) });
+          updateTransaction(tx_.id, { merchant: v.merchant || tx_.merchant, amount: toNumber(v.amount) });
           setEditingCharge(false);
         }}
       />

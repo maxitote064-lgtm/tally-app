@@ -6,15 +6,19 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { colors, font, CAT_COLORS } from '../theme';
 import { RootHeader } from '../components/Headers';
 import { Kicker } from '../components/ui';
-import { useStore, useBudgetCfg, useMoney } from '../store/useStore';
+import { useCategoryLabel, useLang, useMoney, useStore, useT } from '../store/useStore';
 import { monthSpent, visibleTx } from '../store/selectors';
 import { CATEGORIES, RECURRING } from '../data/mock';
+import { monthFull } from '../i18n/calendar';
+import { Key } from '../i18n/translations';
 import { RootStackParamList, TabParamList } from '../navigation/types';
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<TabParamList, 'Insights'>,
   NativeStackScreenProps<RootStackParamList>
 >;
+
+const RECURRING_NOTE_KEYS: Key[] = ['recurring1_note', 'recurring2_note', 'recurring3_note'];
 
 export function InsightsScreen({ navigation }: Props) {
   const mode = useStore((s) => s.mode);
@@ -23,8 +27,10 @@ export function InsightsScreen({ navigation }: Props) {
   const demoEmpty = useStore((s) => s.demoEmpty);
   const hasGoal = useStore((s) => s.hasGoal);
 
-  const c = useBudgetCfg();
   const money = useMoney();
+  const t = useT();
+  const lang = useLang();
+  const catLabel = useCategoryLabel();
   const mSpent = monthSpent(tx, mode, demoEmpty);
   const visible = visibleTx(tx, mode, demoEmpty);
   const monthBaseVal = mode === 'us' ? 6400 : 3200;
@@ -42,44 +48,48 @@ export function InsightsScreen({ navigation }: Props) {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <RootHeader
-        kicker={c.label === 'Household' ? 'Tally · household' : 'Tally'}
-        title="Insights"
+        kicker={mode === 'us' ? `Tally · ${t('household').toLowerCase()}` : 'Tally'}
+        title={t('tabInsights')}
         mode={mode}
         onSetMode={setMode}
         onSettings={() => navigation.navigate('Settings')}
       />
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         <View style={styles.hero}>
-          <Text style={styles.heroKicker}>August 1–26 · {c.label}</Text>
+          <Text style={styles.heroKicker}>
+            {monthFull(lang, 7)} 1–26 · {mode === 'us' ? t('household') : t('personal')}
+          </Text>
           <View style={styles.heroRow}>
             <Text style={styles.heroAmount}>{money(mSpent, 0)}</Text>
-            <Text style={styles.heroDelta}>{mode === 'us' ? 'R$ 1.040' : 'R$ 480'} below the same point in July</Text>
+            <Text style={styles.heroDelta}>
+              {t('insights_belowSamePoint', { amount: mode === 'us' ? 'R$ 1.040' : 'R$ 480', month: monthFull(lang, 6) })}
+            </Text>
           </View>
           <View style={styles.heroStats}>
             <View>
               <Text style={styles.heroStatVal}>{money(mSpent / 26, 0)}</Text>
-              <Text style={styles.heroStatLabel}>a day</Text>
+              <Text style={styles.heroStatLabel}>{t('insights_aDay')}</Text>
             </View>
             <View>
               <Text style={styles.heroStatVal}>{money((mSpent / 26) * 31, 0)}</Text>
-              <Text style={styles.heroStatLabel}>projected</Text>
+              <Text style={styles.heroStatLabel}>{t('insights_projected')}</Text>
             </View>
             <View>
               <Text style={styles.heroStatVal}>{mode === 'us' ? '16' : '18'}</Text>
-              <Text style={styles.heroStatLabel}>days on plan</Text>
+              <Text style={styles.heroStatLabel}>{t('insights_daysOnPlan')}</Text>
             </View>
           </View>
         </View>
 
         <View style={styles.section}>
-          <Kicker>Where it went</Kicker>
+          <Kicker>{t('insights_whereItWent')}</Kicker>
           <View style={{ gap: 11, marginTop: 13 }}>
             {catTotals.map((b) => (
               <View key={b.name} style={{ gap: 6 }}>
                 <View style={styles.breakRow}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                     <View style={[styles.dot, { backgroundColor: b.color }]} />
-                    <Text style={styles.breakName}>{b.name}</Text>
+                    <Text style={styles.breakName}>{catLabel(b.name)}</Text>
                   </View>
                   <Text style={styles.breakVal}>
                     {money(b.amt, 0)} · {Math.round((b.amt / mSpent) * 100)}%
@@ -95,39 +105,37 @@ export function InsightsScreen({ navigation }: Props) {
 
         <View style={styles.section}>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
-            <Kicker color={colors.ink}>Quietly recurring</Kicker>
+            <Kicker color={colors.ink}>{t('insights_quietlyRecurring')}</Kicker>
             <View style={styles.badge}>
               <Text style={styles.badgeText}>3</Text>
             </View>
           </View>
           <View style={{ marginTop: 11 }}>
-            {RECURRING.map((r) => (
+            {RECURRING.map((r, i) => (
               <View key={r.name} style={styles.recurringRow}>
                 <View style={{ gap: 3 }}>
                   <Text style={styles.recurringName}>{r.name}</Text>
-                  <Text style={styles.recurringNote}>{r.note}</Text>
+                  <Text style={styles.recurringNote}>{t(RECURRING_NOTE_KEYS[i])}</Text>
                 </View>
                 <Text style={styles.recurringAmount}>{money(r.amount)}</Text>
               </View>
             ))}
           </View>
-          <Text style={styles.recurringFooter}>
-            Bills land on the day they hit, so these show as spikes in the week strip rather than being smoothed away.
-          </Text>
+          <Text style={styles.recurringFooter}>{t('insights_billsSpikeNote')}</Text>
         </View>
 
         <View style={{ paddingHorizontal: 20, paddingTop: 6, paddingBottom: 26 }}>
           <Pressable onPress={() => navigation.navigate('Budget')} style={styles.moreRow}>
-            <Text style={styles.moreName}>Budget & allowance</Text>
-            <Text style={styles.moreHint}>a day</Text>
+            <Text style={styles.moreName}>{t('insights_budgetAllowance')}</Text>
+            <Text style={styles.moreHint}>{t('insights_aDay')}</Text>
           </Pressable>
           <Pressable onPress={() => navigation.navigate('Goals')} style={styles.moreRow}>
-            <Text style={styles.moreName}>Goals</Text>
-            <Text style={styles.moreHint}>{hasGoal ? 'card ·· 8802' : 'none set'}</Text>
+            <Text style={styles.moreName}>{t('insights_goals')}</Text>
+            <Text style={styles.moreHint}>{hasGoal ? 'card ·· 8802' : t('insights_noneSet')}</Text>
           </Pressable>
           <Pressable onPress={() => navigation.navigate('Notifications')} style={[styles.moreRow, { borderBottomWidth: 0 }]}>
-            <Text style={styles.moreName}>Notifications & nudges</Text>
-            <Text style={styles.moreHint}>3 on</Text>
+            <Text style={styles.moreName}>{t('insights_notificationsNudges')}</Text>
+            <Text style={styles.moreHint}>{t('insights_onCount', { n: 3 })}</Text>
           </Pressable>
         </View>
       </ScrollView>

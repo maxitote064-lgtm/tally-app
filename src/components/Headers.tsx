@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font } from '../theme';
 import { Mode } from '../store/selectors';
+import { useT } from '../store/useStore';
 
 export function RootHeader({
   kicker,
@@ -18,6 +19,7 @@ export function RootHeader({
   onSettings: () => void;
 }) {
   const insets = useSafeAreaInsets();
+  const t = useT();
   return (
     <View style={[styles.wrap, { paddingTop: insets.top + 10 }]}>
       <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
@@ -34,13 +36,13 @@ export function RootHeader({
             onPress={() => onSetMode('me')}
             style={[styles.segmentBtn, mode === 'me' && styles.segmentBtnOn]}
           >
-            <Text style={[styles.segmentText, mode === 'me' && styles.segmentTextOn]}>Me</Text>
+            <Text style={[styles.segmentText, mode === 'me' && styles.segmentTextOn]}>{t('me')}</Text>
           </Pressable>
           <Pressable
             onPress={() => onSetMode('us')}
             style={[styles.segmentBtn, styles.segmentBtnBorder, mode === 'us' && styles.segmentBtnOn]}
           >
-            <Text style={[styles.segmentText, mode === 'us' && styles.segmentTextOn]}>Us</Text>
+            <Text style={[styles.segmentText, mode === 'us' && styles.segmentTextOn]}>{t('us')}</Text>
           </Pressable>
         </View>
         <Pressable onPress={onSettings} style={styles.gear}>
@@ -57,7 +59,7 @@ export function PushedHeader({
   kicker,
   title,
   onClose,
-  closeLabel = 'Close',
+  closeLabel,
 }: {
   kicker: string;
   title: string;
@@ -65,6 +67,7 @@ export function PushedHeader({
   closeLabel?: string;
 }) {
   const insets = useSafeAreaInsets();
+  const t = useT();
   return (
     <View style={[styles.wrap, styles.pushedWrap, { paddingTop: insets.top + 10 }]}>
       <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
@@ -76,7 +79,7 @@ export function PushedHeader({
         </Text>
       </View>
       <Pressable onPress={onClose} style={styles.closeBtn}>
-        <Text style={styles.closeText}>{closeLabel}</Text>
+        <Text style={styles.closeText}>{closeLabel ?? t('close')}</Text>
       </Pressable>
     </View>
   );

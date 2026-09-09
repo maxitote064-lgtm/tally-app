@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font } from '../theme';
-import { CATEGORIES, Category, DAY_LABELS } from '../data/mock';
-import { useCurrency, useStore } from '../store/useStore';
+import { CATEGORIES, Category } from '../data/mock';
+import { useCategoryLabel, useCurrency, useStore, useT } from '../store/useStore';
 import { toNumber } from '../utils/number';
 
 export function AddTransactionModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
@@ -11,6 +11,8 @@ export function AddTransactionModal({ visible, onClose }: { visible: boolean; on
   const currency = useCurrency();
   const mode = useStore((s) => s.mode);
   const addTransaction = useStore((s) => s.addTransaction);
+  const t = useT();
+  const catLabel = useCategoryLabel();
 
   const [merchant, setMerchant] = useState('');
   const [amount, setAmount] = useState('');
@@ -39,21 +41,21 @@ export function AddTransactionModal({ visible, onClose }: { visible: boolean; on
       <Pressable style={styles.backdrop} onPress={onClose} />
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.kav} pointerEvents="box-none">
         <View style={[styles.sheet, { paddingBottom: insets.bottom + 16 }]}>
-          <Text style={styles.title}>Add a charge</Text>
+          <Text style={styles.title}>{t('addTx_title')}</Text>
           <ScrollView style={{ maxHeight: 420 }} contentContainerStyle={{ gap: 14 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
             <View style={{ gap: 6 }}>
-              <Text style={styles.label}>Merchant</Text>
+              <Text style={styles.label}>{t('addTx_merchant')}</Text>
               <TextInput
                 value={merchant}
                 onChangeText={setMerchant}
-                placeholder="e.g. Padaria do Zé"
+                placeholder={t('addTx_merchantPlaceholder')}
                 placeholderTextColor="rgba(32,30,29,.4)"
                 style={styles.input}
                 autoFocus
               />
             </View>
             <View style={{ gap: 6 }}>
-              <Text style={styles.label}>Amount ({currency.symbol})</Text>
+              <Text style={styles.label}>{t('addTx_amount', { symbol: currency.symbol })}</Text>
               <TextInput
                 value={amount}
                 onChangeText={setAmount}
@@ -64,34 +66,34 @@ export function AddTransactionModal({ visible, onClose }: { visible: boolean; on
               />
             </View>
             <View style={{ gap: 6 }}>
-              <Text style={styles.label}>When</Text>
+              <Text style={styles.label}>{t('addTx_when')}</Text>
               <View style={styles.chipsRow}>
-                {DAY_LABELS.map((label, i) => (
+                {[t('addTx_today'), t('addTx_yesterday'), t('addTx_dayBefore')].map((label, i) => (
                   <Pressable key={i} onPress={() => setDay(i)} style={[styles.chip, day === i && styles.chipOn]}>
-                    <Text style={[styles.chipText, day === i && styles.chipTextOn]}>{i === 0 ? 'Today' : i === 1 ? 'Yesterday' : 'Day before'}</Text>
+                    <Text style={[styles.chipText, day === i && styles.chipTextOn]}>{label}</Text>
                   </Pressable>
                 ))}
               </View>
             </View>
             <View style={{ gap: 6 }}>
-              <Text style={styles.label}>Category</Text>
+              <Text style={styles.label}>{t('addTx_category')}</Text>
               <View style={styles.chipsRow}>
                 <Pressable onPress={() => setCat(null)} style={[styles.chip, cat === null && styles.chipOn]}>
-                  <Text style={[styles.chipText, cat === null && styles.chipTextOn]}>Unfiled</Text>
+                  <Text style={[styles.chipText, cat === null && styles.chipTextOn]}>{t('addTx_unfiled')}</Text>
                 </Pressable>
                 {CATEGORIES.map((c) => (
                   <Pressable key={c} onPress={() => setCat(c)} style={[styles.chip, cat === c && styles.chipOn]}>
-                    <Text style={[styles.chipText, cat === c && styles.chipTextOn]}>{c}</Text>
+                    <Text style={[styles.chipText, cat === c && styles.chipTextOn]}>{catLabel(c)}</Text>
                   </Pressable>
                 ))}
               </View>
             </View>
             {mode === 'us' && (
               <View style={{ gap: 6 }}>
-                <Text style={styles.label}>Whose card</Text>
+                <Text style={styles.label}>{t('addTx_whoseCard')}</Text>
                 <View style={styles.chipsRow}>
                   <Pressable onPress={() => setOwner('me')} style={[styles.chip, owner === 'me' && styles.chipOn]}>
-                    <Text style={[styles.chipText, owner === 'me' && styles.chipTextOn]}>You</Text>
+                    <Text style={[styles.chipText, owner === 'me' && styles.chipTextOn]}>{t('you')}</Text>
                   </Pressable>
                   <Pressable onPress={() => setOwner('bia')} style={[styles.chip, owner === 'bia' && styles.chipOn]}>
                     <Text style={[styles.chipText, owner === 'bia' && styles.chipTextOn]}>Bia</Text>
@@ -102,7 +104,7 @@ export function AddTransactionModal({ visible, onClose }: { visible: boolean; on
           </ScrollView>
           <View style={styles.btnRow}>
             <Pressable style={styles.saveBtn} onPress={save}>
-              <Text style={styles.saveBtnText}>Add charge</Text>
+              <Text style={styles.saveBtnText}>{t('addTx_addCharge')}</Text>
             </Pressable>
             <Pressable
               style={styles.cancelBtn}
@@ -111,7 +113,7 @@ export function AddTransactionModal({ visible, onClose }: { visible: boolean; on
                 onClose();
               }}
             >
-              <Text style={styles.cancelBtnText}>Cancel</Text>
+              <Text style={styles.cancelBtnText}>{t('cancel')}</Text>
             </Pressable>
           </View>
         </View>

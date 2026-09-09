@@ -5,12 +5,16 @@ import { colors, font, CURRENCIES } from '../theme';
 import { PushedHeader } from '../components/Headers';
 import { Kicker } from '../components/ui';
 import { OptionPickerModal } from '../components/OptionPickerModal';
-import { useStore, useBudgetCfg, useCurrency, useMoney } from '../store/useStore';
+import { useStore, useBudgetCfg, useCurrency, useLang, useMoney, useT } from '../store/useStore';
 import { allowance } from '../store/selectors';
 import { CARDS } from '../data/mock';
+import { LANGUAGES } from '../i18n/translations';
 import { RootStackParamList } from '../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Settings'>;
+
+const CARD_META_KEYS = ['settings_card1_meta', 'settings_card2_meta', 'settings_card3_meta'] as const;
+const CARD_STATE_KEYS = { Linked: 'settings_state_linked', 'Goal only': 'settings_state_goalOnly' } as const;
 
 export function SettingsScreen({ navigation }: Props) {
   const mode = useStore((s) => s.mode);
@@ -20,47 +24,54 @@ export function SettingsScreen({ navigation }: Props) {
   const hasGoal = useStore((s) => s.hasGoal);
   const replayOnboarding = useStore((s) => s.replayOnboarding);
   const setCurrency = useStore((s) => s.setCurrency);
+  const setLanguage = useStore((s) => s.setLanguage);
   const currency = useCurrency();
+  const lang = useLang();
+  const t = useT();
 
   const c = useBudgetCfg();
   const money = useMoney();
   const budget = allowance(tx, mode, demoEmpty, c);
 
   const [pickingCurrency, setPickingCurrency] = useState(false);
+  const [pickingLanguage, setPickingLanguage] = useState(false);
 
   const rows: { name: string; hint: string; go: () => void }[] = [
-    { name: 'Household — you and Bia', hint: mode === 'us' ? 'joint view on' : 'off', go: () => setMode('us') },
-    { name: 'Budget & allowance', hint: `${money(budget, 0)} a day`, go: () => navigation.navigate('Budget') },
-    { name: 'Goals', hint: hasGoal ? 'card ·· 8802' : 'none', go: () => navigation.navigate('Goals') },
-    { name: 'Notifications & nudges', hint: '3 on', go: () => navigation.navigate('Notifications') },
-    { name: 'Categories', hint: '6 in use', go: () => navigation.navigate('Budget') },
-    { name: 'Currency', hint: `${currency.symbol} ${currency.code}`, go: () => setPickingCurrency(true) },
+    { name: t('settings_householdRow'), hint: mode === 'us' ? t('settings_jointViewOn') : t('settings_off'), go: () => setMode('us') },
+    { name: t('settings_budgetAllowance'), hint: t('settings_aDayHint', { amount: money(budget, 0) }), go: () => navigation.navigate('Budget') },
+    { name: t('settings_goals'), hint: hasGoal ? 'card ·· 8802' : t('settings_none'), go: () => navigation.navigate('Goals') },
+    { name: t('settings_notificationsNudges'), hint: t('settings_onCount', { n: 3 }), go: () => navigation.navigate('Notifications') },
+    { name: t('settings_categories'), hint: t('settings_inUse', { n: 6 }), go: () => navigation.navigate('Budget') },
+    { name: t('settings_currency'), hint: `${currency.symbol} ${currency.code}`, go: () => setPickingCurrency(true) },
+    { name: t('settings_language'), hint: LANGUAGES.find((l) => l.code === lang)?.label ?? '', go: () => setPickingLanguage(true) },
     {
-      name: 'Replay onboarding',
-      hint: '5 steps',
+      name: t('settings_replayOnboarding'),
+      hint: t('settings_stepsCount', { n: 5 }),
       go: () => {
         replayOnboarding();
         navigation.navigate('Onboarding');
       },
     },
-    { name: 'Export a CSV', hint: 'August', go: () => {} },
+    { name: t('settings_exportCsv'), hint: t('settings_exportHint'), go: () => {} },
   ];
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <PushedHeader kicker="Account" title="Settings" onClose={() => navigation.goBack()} />
+      <PushedHeader kicker={t('settings_kicker')} title={t('settings_title')} onClose={() => navigation.goBack()} />
       <ScrollView contentContainerStyle={{ paddingBottom: 26 }}>
         <View style={styles.section}>
-          <Kicker>Wallet</Kicker>
+          <Kicker>{t('settings_wallet')}</Kicker>
           <View style={{ gap: 10, marginTop: 11 }}>
-            {CARDS.map((c) => (
-              <View key={c.name} style={styles.card}>
+            {CARDS.map((card, i) => (
+              <View key={card.name} style={styles.card}>
                 <View style={{ gap: 3 }}>
-                  <Text style={styles.cardName}>{c.name}</Text>
-                  <Text style={styles.cardMeta}>{c.meta}</Text>
+                  <Text style={styles.cardName}>{card.name}</Text>
+                  <Text style={styles.cardMeta}>{t(CARD_META_KEYS[i])}</Text>
                 </View>
-                <View style={[styles.stateTag, { backgroundColor: c.highlight ? colors.red : colors.ink }]}>
-                  <Text style={[styles.stateText, { color: c.highlight ? colors.white : colors.offWhite }]}>{c.state}</Text>
+                <View style={[styles.stateTag, { backgroundColor: card.highlight ? colors.red : colors.ink }]}>
+                  <Text style={[styles.stateText, { color: card.highlight ? colors.white : colors.offWhite }]}>
+                    {t(CARD_STATE_KEYS[card.state as keyof typeof CARD_STATE_KEYS])}
+                  </Text>
                 </View>
               </View>
             ))}
@@ -74,16 +85,13 @@ export function SettingsScreen({ navigation }: Props) {
               <Text style={styles.rowHint}>{r.hint}</Text>
             </Pressable>
           ))}
-          <Text style={styles.footnote}>
-            Tally reads charge notifications from your wallet. It never holds your card numbers and can't move money out of any
-            account.
-          </Text>
+          <Text style={styles.footnote}>{t('settings_footnote')}</Text>
         </View>
       </ScrollView>
 
       <OptionPickerModal
         visible={pickingCurrency}
-        title="Currency"
+        title={t('settings_currency')}
         selectedKey={currency.code}
         options={CURRENCIES.map((cur) => ({ key: cur.code, label: `${cur.symbol}  ${cur.name}`, sublabel: cur.code }))}
         onSelect={(code) => {
@@ -91,6 +99,18 @@ export function SettingsScreen({ navigation }: Props) {
           setPickingCurrency(false);
         }}
         onCancel={() => setPickingCurrency(false)}
+      />
+
+      <OptionPickerModal
+        visible={pickingLanguage}
+        title={t('settings_language')}
+        selectedKey={lang}
+        options={LANGUAGES.map((l) => ({ key: l.code, label: l.label }))}
+        onSelect={(code) => {
+          setLanguage(code as typeof lang);
+          setPickingLanguage(false);
+        }}
+        onCancel={() => setPickingLanguage(false)}
       />
     </View>
   );

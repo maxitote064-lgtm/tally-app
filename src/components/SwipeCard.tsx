@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { Animated, PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, font } from '../theme';
 import { CATEGORIES, Transaction } from '../data/mock';
-import { useStore, useMoney } from '../store/useStore';
+import { useCategoryLabel, useMoney, useStore, useT } from '../store/useStore';
 import { SplitRatioBar } from './SplitRatioBar';
 
 export function SwipeCard({ t }: { t: Transaction }) {
@@ -16,6 +16,8 @@ export function SwipeCard({ t }: { t: Transaction }) {
   const cancelSplit = useStore((s) => s.cancelSplit);
   const commitSplit = useStore((s) => s.commitSplit);
   const money = useMoney();
+  const tr = useT();
+  const catLabel = useCategoryLabel();
 
   const pickerOpen = pickerTxId === t.id;
   const splitOpen = split?.txId === t.id;
@@ -53,10 +55,10 @@ export function SwipeCard({ t }: { t: Transaction }) {
     <View style={styles.outer}>
       <View style={styles.bgLabels} pointerEvents="none">
         <Text style={[styles.bgLabel, { color: liveDx > 60 ? colors.white : 'rgba(243,242,242,.32)' }]}>
-          Accept · {t.guess}
+          {tr('swipe_accept', { category: t.guess ? catLabel(t.guess) : '' })}
         </Text>
         <Text style={[styles.bgLabel, { color: liveDx < -60 ? colors.white : 'rgba(243,242,242,.32)' }]}>
-          Pick ›
+          {tr('swipe_pick')}
         </Text>
       </View>
 
@@ -78,7 +80,7 @@ export function SwipeCard({ t }: { t: Transaction }) {
 
         <View style={styles.guessRow}>
           <View style={styles.dot} />
-          <Text style={styles.guessText}>Best guess: {t.guess}</Text>
+          <Text style={styles.guessText}>{tr('swipe_bestGuess', { category: t.guess ? catLabel(t.guess) : '' })}</Text>
           <View style={{ flex: 1 }} />
           <Text style={styles.confidence}>{t.confidence}</Text>
         </View>
@@ -87,7 +89,7 @@ export function SwipeCard({ t }: { t: Transaction }) {
           <View style={styles.chipsRow}>
             {CATEGORIES.map((c) => (
               <Pressable key={c} style={styles.chip} onPress={() => assign(t.id, c)}>
-                <Text style={styles.chipText}>{c}</Text>
+                <Text style={styles.chipText}>{catLabel(c)}</Text>
               </Pressable>
             ))}
           </View>
@@ -96,19 +98,19 @@ export function SwipeCard({ t }: { t: Transaction }) {
         {splitOpen && split && (
           <View style={styles.splitPanel}>
             <View style={styles.splitHeadRow}>
-              <Text style={styles.kickerDark}>Split between two</Text>
-              <Text style={styles.hint}>drag the handle</Text>
+              <Text style={styles.kickerDark}>{tr('swipe_splitBetweenTwo')}</Text>
+              <Text style={styles.hint}>{tr('swipe_dragHandle')}</Text>
             </View>
             <View style={styles.splitLabelsRow}>
               <View style={styles.splitLabel}>
                 <View style={[styles.dot, { backgroundColor: colors.ink }]} />
                 <Text style={styles.splitLabelText}>
-                  {split.a} · {money((t.amount * split.ratio) / 100)}
+                  {catLabel(split.a)} · {money((t.amount * split.ratio) / 100)}
                 </Text>
               </View>
               <View style={styles.splitLabel}>
                 <Text style={styles.splitLabelText}>
-                  {money((t.amount * (100 - split.ratio)) / 100)} · {split.b}
+                  {money((t.amount * (100 - split.ratio)) / 100)} · {catLabel(split.b)}
                 </Text>
                 <View style={[styles.dot, { backgroundColor: colors.red }]} />
               </View>
@@ -127,17 +129,17 @@ export function SwipeCard({ t }: { t: Transaction }) {
                       { borderColor: isA || isB ? colors.ink : 'rgba(32,30,29,.3)', backgroundColor: isA ? colors.ink : isB ? colors.red : colors.white },
                     ]}
                   >
-                    <Text style={[styles.splitChipText, { color: isA || isB ? colors.white : colors.ink }]}>{c}</Text>
+                    <Text style={[styles.splitChipText, { color: isA || isB ? colors.white : colors.ink }]}>{catLabel(c)}</Text>
                   </Pressable>
                 );
               })}
             </View>
             <View style={styles.splitBtnRow}>
               <Pressable style={styles.saveBtn} onPress={commitSplit}>
-                <Text style={styles.saveBtnText}>Save split</Text>
+                <Text style={styles.saveBtnText}>{tr('detail_saveSplit')}</Text>
               </Pressable>
               <Pressable style={styles.cancelBtn} onPress={cancelSplit}>
-                <Text style={styles.cancelBtnText}>Cancel</Text>
+                <Text style={styles.cancelBtnText}>{tr('cancel')}</Text>
               </Pressable>
             </View>
           </View>

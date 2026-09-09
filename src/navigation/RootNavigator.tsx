@@ -12,20 +12,22 @@ import { GoalsScreen } from '../screens/GoalsScreen';
 import { NotificationsScreen } from '../screens/NotificationsScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { OnboardingScreen } from '../screens/OnboardingScreen';
+import { useT } from '../store/useStore';
 
 const Tab = createBottomTabNavigator<TabParamList>();
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 function Tabs() {
+  const t = useT();
   return (
     <Tab.Navigator
       screenOptions={{ headerShown: false }}
       tabBar={(props) => <CustomTabBar {...props} />}
       detachInactiveScreens
     >
-      <Tab.Screen name="Today" component={TodayScreen} options={{ title: 'Today' }} />
-      <Tab.Screen name="Activity" component={ActivityScreen} options={{ title: 'Activity' }} />
-      <Tab.Screen name="Insights" component={InsightsScreen} options={{ title: 'Insights' }} />
+      <Tab.Screen name="Today" component={TodayScreen} options={{ title: t('tabToday') }} />
+      <Tab.Screen name="Activity" component={ActivityScreen} options={{ title: t('tabActivity') }} />
+      <Tab.Screen name="Insights" component={InsightsScreen} options={{ title: t('tabInsights') }} />
     </Tab.Navigator>
   );
 }

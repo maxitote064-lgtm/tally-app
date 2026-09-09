@@ -2,9 +2,18 @@ import React from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font } from '../theme';
-import { useStore, useBudgetCfg, useMoney } from '../store/useStore';
+import { useStore, useBudgetCfg, useCategoryLabel, useMoney, useT } from '../store/useStore';
 import { allowance, spentToday } from '../store/selectors';
-import { CATEGORIES, CATEGORY_HINTS } from '../data/mock';
+import { CATEGORIES, Category } from '../data/mock';
+
+const CATEGORY_HINT_COUNTS: Record<Category, number | null> = {
+  Groceries: 6,
+  'Eating out': 4,
+  Transport: 12,
+  Coffee: 9,
+  Household: 2,
+  Bills: null,
+};
 
 export function PostPaymentSheet() {
   const sheet = useStore((s) => s.sheet);
@@ -17,6 +26,8 @@ export function PostPaymentSheet() {
 
   const c = useBudgetCfg();
   const money = useMoney();
+  const t = useT();
+  const catLabel = useCategoryLabel();
   const p = sheet.pending;
   const budget = allowance(tx, mode, demoEmpty, c);
   const spent = spentToday(tx, mode, demoEmpty);
@@ -28,7 +39,7 @@ export function PostPaymentSheet() {
         <View style={[styles.sheet, { paddingBottom: insets.bottom + 24 }]}>
           <View style={styles.kickerRow}>
             <View style={styles.dot} />
-            <Text style={styles.kicker}>Paid with your wallet · just now</Text>
+            <Text style={styles.kicker}>{t('sheet_paidJustNow')}</Text>
           </View>
           <View style={styles.amountRow}>
             <View style={{ gap: 3 }}>
@@ -38,22 +49,23 @@ export function PostPaymentSheet() {
             <Text style={styles.amount}>{money(p.amount)}</Text>
           </View>
           <Pressable style={styles.acceptBtn} onPress={() => filePending(p.guess)}>
-            <Text style={styles.acceptText}>Yes — {p.guess}</Text>
+            <Text style={styles.acceptText}>{t('sheet_yes', { category: p.guess ? catLabel(p.guess) : '' })}</Text>
           </Pressable>
           <View>
-            {CATEGORIES.filter((c) => c !== p.guess).map((c) => (
-              <Pressable key={c} style={styles.chipRow} onPress={() => filePending(c)}>
-                <Text style={styles.chipName}>{c}</Text>
-                <Text style={styles.chipHint}>{CATEGORY_HINTS[c]}</Text>
-              </Pressable>
-            ))}
+            {CATEGORIES.filter((c) => c !== p.guess).map((c) => {
+              const n = CATEGORY_HINT_COUNTS[c];
+              return (
+                <Pressable key={c} style={styles.chipRow} onPress={() => filePending(c)}>
+                  <Text style={styles.chipName}>{catLabel(c)}</Text>
+                  <Text style={styles.chipHint}>{n === null ? t('sheet_recurring') : t('sheet_usedTimes', { n })}</Text>
+                </Pressable>
+              );
+            })}
           </View>
           <View style={styles.footerRow}>
-            <Text style={styles.afterLine}>
-              Filing puts today at {money(spent + p.amount)} of {money(budget, 0)}.
-            </Text>
+            <Text style={styles.afterLine}>{t('sheet_filingPuts', { spent: money(spent + p.amount), budget: money(budget, 0) })}</Text>
             <Pressable style={styles.laterBtn} onPress={dismissSheet}>
-              <Text style={styles.laterText}>Later</Text>
+              <Text style={styles.laterText}>{t('sheet_later')}</Text>
             </Pressable>
           </View>
         </View>

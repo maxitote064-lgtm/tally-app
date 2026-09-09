@@ -6,17 +6,16 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { colors, font } from '../theme';
 import { RootHeader } from '../components/Headers';
 import { Btn, Divider, Kicker, Section } from '../components/ui';
-import { useStore, useBudgetCfg, useMoney } from '../store/useStore';
-import { allowance, catMeta, spentToday, todayTx } from '../store/selectors';
+import { useStore, useBudgetCfg, useCatMeta, useLang, useMoney, useT } from '../store/useStore';
+import { allowance, spentToday, todayTx } from '../store/selectors';
 import { SwipeCard } from '../components/SwipeCard';
+import { weekdayShort, monthFull } from '../i18n/calendar';
 import { RootStackParamList, TabParamList } from '../navigation/types';
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<TabParamList, 'Today'>,
   NativeStackScreenProps<RootStackParamList>
 >;
-
-const WEEK_LABELS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
 export function TodayScreen({ navigation }: Props) {
   const mode = useStore((s) => s.mode);
@@ -27,6 +26,9 @@ export function TodayScreen({ navigation }: Props) {
 
   const c = useBudgetCfg();
   const money = useMoney();
+  const t = useT();
+  const lang = useLang();
+  const catMeta = useCatMeta();
   const budget = allowance(tx, mode, demoEmpty, c);
   const spent = spentToday(tx, mode, demoEmpty);
   const today = todayTx(tx, mode, demoEmpty);
@@ -36,28 +38,29 @@ export function TodayScreen({ navigation }: Props) {
   const week = useMemo(() => {
     const weekVals = mode === 'us' ? [482, 705, 1044] : [318, 470, 692];
     const raw = [
-      { day: 'SUN', v: weekVals[0], isToday: false },
-      { day: 'MON', v: weekVals[1], isToday: false },
-      { day: 'TUE', v: weekVals[2], isToday: false },
-      { day: 'WED', v: spent, isToday: true },
-      { day: 'THU', v: 0, isToday: false },
-      { day: 'FRI', v: 0, isToday: false },
-      { day: 'SAT', v: 0, isToday: false },
+      { wd: 0, v: weekVals[0], isToday: false },
+      { wd: 1, v: weekVals[1], isToday: false },
+      { wd: 2, v: weekVals[2], isToday: false },
+      { wd: 3, v: spent, isToday: true },
+      { wd: 4, v: 0, isToday: false },
+      { wd: 5, v: 0, isToday: false },
+      { wd: 6, v: 0, isToday: false },
     ];
     const max = Math.max(...raw.map((d) => d.v), budget);
     return raw.map((d) => ({
       ...d,
+      day: weekdayShort(lang, d.wd),
       h: Math.max(2, Math.round((d.v / max) * 50)),
       fill: d.isToday ? colors.red : d.v ? colors.ink : colors.track,
       labelColor: d.isToday ? colors.red : colors.mutedFaint,
     }));
-  }, [mode, spent, budget]);
+  }, [mode, spent, budget, lang]);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <RootHeader
-        kicker={c.label === 'Household' ? 'Tally · household' : 'Tally'}
-        title="Wed 26 August"
+        kicker={mode === 'us' ? `Tally · ${t('household').toLowerCase()}` : 'Tally'}
+        title={`${weekdayShort(lang, 3)} 26 ${monthFull(lang, 7)}`}
         mode={mode}
         onSetMode={setMode}
         onSettings={() => navigation.navigate('Settings')}
@@ -65,17 +68,17 @@ export function TodayScreen({ navigation }: Props) {
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         <Section bottomRule style={{ gap: 13 }}>
           <View style={styles.spentTop}>
-            <Kicker>{c.label === 'Household' ? 'Joint spend today' : 'Spent today'}</Kicker>
+            <Kicker>{mode === 'us' ? t('today_kickerHousehold') : t('today_kickerPersonal')}</Kicker>
             <Pressable onPress={() => navigation.navigate('Budget')}>
-              <Text style={styles.allowanceLink}>allowance</Text>
+              <Text style={styles.allowanceLink}>{t('today_allowanceLink')}</Text>
             </Pressable>
           </View>
           <View style={styles.spentRow}>
             <Text style={styles.spentAmount}>{money(spent)}</Text>
             <Text style={styles.spentNote}>
-              of {money(budget, 0)}
+              {t('today_of')} {money(budget, 0)}
               {'\n'}
-              {left >= 0 ? `${money(left)} left` : `${money(Math.abs(left))} over`}
+              {left >= 0 ? `${money(left)} ${t('today_left')}` : `${money(Math.abs(left))} ${t('today_over')}`}
             </Text>
           </View>
           <View style={styles.barTrack}>
@@ -94,17 +97,14 @@ export function TodayScreen({ navigation }: Props) {
         {today.length === 0 && (
           <Section style={{ gap: 14, alignItems: 'flex-start', paddingTop: 34, paddingBottom: 30 }}>
             <View style={styles.emptyMark} />
-            <Text style={styles.emptyTitle}>Nothing spent yet today</Text>
-            <Text style={styles.emptyBody}>
-              Charges appear here the moment you pay with your wallet — usually before you've put your phone away. Your full{' '}
-              {money(budget, 0)} is intact.
-            </Text>
+            <Text style={styles.emptyTitle}>{t('today_emptyTitle')}</Text>
+            <Text style={styles.emptyBody}>{t('today_emptyBody', { budget: money(budget, 0) })}</Text>
             <View style={{ flexDirection: 'row', gap: 8, paddingTop: 4 }}>
               <Btn variant="primary" onPress={simulate}>
-                Simulate a tap
+                {t('today_simulateTap')}
               </Btn>
               <Btn variant="outline" onPress={() => navigation.navigate('Budget')}>
-                Review allowance
+                {t('today_reviewAllowance')}
               </Btn>
             </View>
           </Section>
@@ -114,12 +114,12 @@ export function TodayScreen({ navigation }: Props) {
           <View style={[styles.uncatWrap]}>
             <View style={styles.uncatHead}>
               <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
-                <Kicker color={colors.ink}>Needs a category</Kicker>
+                <Kicker color={colors.ink}>{t('today_needsCategory')}</Kicker>
                 <View style={styles.countBadge}>
                   <Text style={styles.countBadgeText}>{uncat.length}</Text>
                 </View>
               </View>
-              <Text style={styles.gestureHint}>→ accept · ← pick · ↑ split</Text>
+              <Text style={styles.gestureHint}>{t('today_gestureHint')}</Text>
             </View>
             <View style={{ gap: 10 }}>
               {uncat.map((t) => (
@@ -132,37 +132,37 @@ export function TodayScreen({ navigation }: Props) {
         {today.length > 0 && (
           <Section style={{ paddingTop: 14 }}>
             <View style={styles.allHeadRow}>
-              <Kicker>All of today</Kicker>
+              <Kicker>{t('today_allOfToday')}</Kicker>
               <Text style={styles.countLabel}>
-                {today.length} {today.length === 1 ? 'charge' : 'charges'}
+                {today.length} {today.length === 1 ? t('today_charge') : t('today_charges')}
               </Text>
             </View>
-            {today.map((t) => {
-              const m = catMeta(t);
+            {today.map((tItem) => {
+              const m = catMeta(tItem);
               return (
                 <Pressable
-                  key={t.id}
-                  onPress={() => navigation.navigate('Detail', { txId: t.id })}
+                  key={tItem.id}
+                  onPress={() => navigation.navigate('Detail', { txId: tItem.id })}
                   style={styles.txRow}
                 >
                   <View style={{ minWidth: 0, gap: 3, flex: 1 }}>
                     <Text style={styles.txMerchant} numberOfLines={1}>
-                      {t.merchant}
+                      {tItem.merchant}
                     </Text>
                     <Text style={[styles.txCat, { color: m.color === 'need' ? colors.redDark : colors.muted }]}>
                       {m.label}
                     </Text>
                   </View>
-                  <Text style={styles.txAmount}>{money(t.amount)}</Text>
+                  <Text style={styles.txAmount}>{money(tItem.amount)}</Text>
                 </Pressable>
               );
             })}
             <View style={styles.totalRow}>
-              <Kicker>Total</Kicker>
+              <Kicker>{t('today_total')}</Kicker>
               <Text style={styles.totalAmount}>{money(spent)}</Text>
             </View>
             <Btn variant="outline" style={{ marginTop: 16, width: '100%', alignItems: 'center' }} onPress={simulate}>
-              Simulate a tap-to-pay
+              {t('today_simulateTapToPay')}
             </Btn>
           </Section>
         )}

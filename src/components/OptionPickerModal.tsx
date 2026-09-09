@@ -2,6 +2,7 @@ import React from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font } from '../theme';
+import { useT } from '../store/useStore';
 
 export interface PickerOption {
   key: string;
@@ -25,6 +26,7 @@ export function OptionPickerModal({
   onCancel: () => void;
 }) {
   const insets = useSafeAreaInsets();
+  const t = useT();
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
       <Pressable style={styles.backdrop} onPress={onCancel} />
@@ -45,7 +47,7 @@ export function OptionPickerModal({
           })}
         </ScrollView>
         <Pressable style={styles.cancelBtn} onPress={onCancel}>
-          <Text style={styles.cancelBtnText}>Cancel</Text>
+          <Text style={styles.cancelBtnText}>{t('cancel')}</Text>
         </Pressable>
       </View>
     </Modal>

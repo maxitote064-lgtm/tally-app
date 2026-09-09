@@ -2,15 +2,6 @@ export type Category = 'Groceries' | 'Eating out' | 'Transport' | 'Coffee' | 'Ho
 
 export const CATEGORIES: Category[] = ['Groceries', 'Eating out', 'Transport', 'Coffee', 'Household', 'Bills'];
 
-export const CATEGORY_HINTS: Record<Category, string> = {
-  Groceries: 'used 6× this month',
-  'Eating out': 'used 4×',
-  Transport: 'used 12×',
-  Coffee: 'used 9×',
-  Household: 'used 2×',
-  Bills: 'recurring',
-};
-
 export interface Transaction {
   id: number;
   merchant: string;
@@ -42,8 +33,6 @@ export const SEED_TX: Transaction[] = [
   { id: 13, merchant: 'Restaurante Maní', time: '20:10', day: 2, method: 'Wallet · card ·· 0392', amount: 386, cat: 'Eating out', owner: 'me', joint: true },
 ];
 
-export const DAY_LABELS = ['Today · Wed 26 Aug', 'Tue 25 Aug', 'Mon 24 Aug'];
-
 export interface IncomingCharge {
   merchant: string;
   location: string;
@@ -56,72 +45,6 @@ export const INCOMING: IncomingCharge[] = [
   { merchant: 'Assaí Atacadista', location: 'Av. Rebouças · terminal 11', amount: 189.4, guess: 'Groceries' },
   { merchant: 'Metrô SP', location: 'catraca Paulista', amount: 5.2, guess: 'Transport' },
   { merchant: 'Temakeria Makis', location: 'Pinheiros · terminal 02', amount: 112.8, guess: 'Eating out' },
-];
-
-export interface OnboardingStep {
-  title: string;
-  body: string;
-  rows: [string, string][];
-  fine: string;
-  cta: string;
-}
-
-export const STEPS: OnboardingStep[] = [
-  {
-    title: 'Link the card you tap with',
-    body: 'Tally listens for charge notifications from your wallet. Nothing is stored beyond the merchant, the amount and the time.',
-    rows: [
-      ['Card ·· 4417', 'Primary'],
-      ['Card ·· 0392', 'Also linked'],
-      ['Card ·· 8802', 'Skip — payoff card'],
-    ],
-    fine: 'You can add or drop a card later in Settings. Tally never sees card numbers and can’t move money.',
-    cta: 'Link two cards',
-  },
-  {
-    title: 'Income, then the bills you can’t move',
-    body: 'What’s left after fixed bills is what a day can actually spend. Tally divides that by the days remaining in the month.',
-    rows: [
-      ['Monthly income', 'R$ 12.800'],
-      ['Fixed bills', '−R$ 4.156'],
-      ['Left for the month', 'R$ 8.644'],
-    ],
-    fine: 'Bills still count on the day they hit, so a rent day looks like a spike rather than quietly shrinking every other day.',
-    cta: 'Confirm the numbers',
-  },
-  {
-    title: 'Spending with someone?',
-    body: 'Invite them and Tally keeps two sets of numbers: yours, and the joint view. A Me / Us control at the top swaps between them.',
-    rows: [
-      ['Invite by', 'bia@…'],
-      ['They see', 'Joint charges only'],
-      ['Joint allowance', 'Recomputed nightly'],
-    ],
-    fine: 'Either of you can mark a charge joint after the fact. Personal charges never appear in the other person’s feed.',
-    cta: 'Send Bia an invite',
-  },
-  {
-    title: 'Point the leftovers at something',
-    body: 'Whatever’s left of an allowance at midnight is swept somewhere the next morning. Most people aim it at a balance they’re paying down.',
-    rows: [
-      ['Target', 'Card ·· 8802'],
-      ['Balance today', 'R$ 4.180'],
-      ['At this pace, clear by', 'Jun 2027'],
-    ],
-    fine: 'Underspend only — Tally never sweeps money you haven’t already avoided spending.',
-    cta: 'Use this card',
-  },
-  {
-    title: 'One question per charge',
-    body: 'That’s the whole loop. A charge lands, Tally guesses, you accept or correct it. Swipe right to accept, left to pick, up to split.',
-    rows: [
-      ['Assaí Atacadista', 'R$ 189,40'],
-      ['Best guess', 'Groceries'],
-      ['Time to file', 'One tap'],
-    ],
-    fine: 'Guesses get better after about a week — most people stop correcting them entirely by the second month.',
-    cta: 'Start using Tally',
-  },
 ];
 
 export const RECURRING = [

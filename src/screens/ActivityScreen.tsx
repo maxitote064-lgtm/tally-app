@@ -5,11 +5,10 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { colors, font } from '../theme';
 import { RootHeader } from '../components/Headers';
-import { Kicker } from '../components/ui';
 import { AddTransactionModal } from '../components/AddTransactionModal';
-import { useStore, useBudgetCfg, useMoney } from '../store/useStore';
-import { catMeta, filterTx, FILTERS } from '../store/selectors';
-import { DAY_LABELS } from '../data/mock';
+import { useCatMeta, useCategoryLabel, useLang, useMoney, useStore, useT } from '../store/useStore';
+import { filterTx, FILTERS, Filter } from '../store/selectors';
+import { weekdayShort, monthShort } from '../i18n/calendar';
 import { RootStackParamList, TabParamList } from '../navigation/types';
 
 type Props = CompositeScreenProps<
@@ -25,31 +24,48 @@ export function ActivityScreen({ navigation }: Props) {
   const filter = useStore((s) => s.filter);
   const setFilter = useStore((s) => s.setFilter);
 
-  const c = useBudgetCfg();
   const money = useMoney();
+  const t = useT();
+  const lang = useLang();
+  const catLabel = useCategoryLabel();
+  const catMeta = useCatMeta();
   const [adding, setAdding] = useState(false);
   const filtered = filterTx(tx, mode, demoEmpty, filter as any);
+
+  function filterLabel(f: Filter): string {
+    if (f === 'All') return t('filterAll');
+    if (f === 'Unfiled') return t('filterUnfiled');
+    if (f === 'Joint') return t('joint');
+    return catLabel(f as any);
+  }
+
+  const dayLabels = [
+    `${t('tabToday')} · ${weekdayShort(lang, 3)} 26 ${monthShort(lang, 7)}`,
+    `${weekdayShort(lang, 2)} 25 ${monthShort(lang, 7)}`,
+    `${weekdayShort(lang, 1)} 24 ${monthShort(lang, 7)}`,
+  ];
 
   const groups = useMemo(
     () =>
       [0, 1, 2]
         .map((d) => {
-          const items = filtered.filter((t) => t.day === d);
+          const items = filtered.filter((tItem) => tItem.day === d);
           return {
-            label: DAY_LABELS[d],
-            total: money(items.reduce((a, t) => a + t.amount, 0)),
+            day: d,
+            label: dayLabels[d],
+            total: money(items.reduce((a, tItem) => a + tItem.amount, 0)),
             items,
           };
         })
         .filter((g) => g.items.length),
-    [filtered]
+    [filtered, lang]
   );
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <RootHeader
-        kicker={c.label === 'Household' ? 'Tally · household' : 'Tally'}
-        title="Activity"
+        kicker={mode === 'us' ? `Tally · ${t('household').toLowerCase()}` : 'Tally'}
+        title={t('tabActivity')}
         mode={mode}
         onSetMode={setMode}
         onSettings={() => navigation.navigate('Settings')}
@@ -57,11 +73,11 @@ export function ActivityScreen({ navigation }: Props) {
       <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40, gap: 14 }}>
         <View style={styles.search}>
           <View style={styles.searchDot} />
-          <Text style={styles.searchText}>Search merchant, category, amount</Text>
+          <Text style={styles.searchText}>{t('activity_searchPlaceholder')}</Text>
         </View>
 
         <Pressable style={styles.addBtn} onPress={() => setAdding(true)}>
-          <Text style={styles.addBtnText}>+ Add a charge</Text>
+          <Text style={styles.addBtnText}>{t('activity_addCharge')}</Text>
         </Pressable>
 
         <View style={styles.filterRow}>
@@ -73,34 +89,34 @@ export function ActivityScreen({ navigation }: Props) {
                 onPress={() => setFilter(f)}
                 style={[styles.filterChip, { borderColor: on ? colors.ink : 'rgba(32,30,29,.3)', backgroundColor: on ? colors.ink : 'transparent' }]}
               >
-                <Text style={[styles.filterText, { color: on ? colors.white : colors.ink }]}>{f}</Text>
+                <Text style={[styles.filterText, { color: on ? colors.white : colors.ink }]}>{filterLabel(f)}</Text>
               </Pressable>
             );
           })}
         </View>
 
         {groups.map((g) => (
-          <View key={g.label} style={{ gap: 0 }}>
+          <View key={g.day} style={{ gap: 0 }}>
             <View style={styles.groupHead}>
               <Text style={styles.groupLabel}>{g.label}</Text>
               <Text style={styles.groupTotal}>{g.total}</Text>
             </View>
-            {g.items.map((t) => {
-              const m = catMeta(t);
-              const ownerTag = mode === 'us' ? (t.owner === 'bia' ? ' · Bia' : ' · You') : '';
+            {g.items.map((tItem) => {
+              const m = catMeta(tItem);
+              const ownerTag = mode === 'us' ? (tItem.owner === 'bia' ? ' · Bia' : ` · ${t('you')}`) : '';
               return (
-                <Pressable key={t.id} onPress={() => navigation.navigate('Detail', { txId: t.id })} style={styles.row}>
-                  <Text style={styles.time}>{t.time}</Text>
+                <Pressable key={tItem.id} onPress={() => navigation.navigate('Detail', { txId: tItem.id })} style={styles.row}>
+                  <Text style={styles.time}>{tItem.time}</Text>
                   <View style={{ minWidth: 0, flex: 1, gap: 3 }}>
                     <Text style={styles.merchant} numberOfLines={1}>
-                      {t.merchant}
+                      {tItem.merchant}
                     </Text>
                     <Text style={[styles.cat, { color: m.color === 'need' ? colors.redDark : colors.muted }]}>
                       {m.label}
                       {ownerTag}
                     </Text>
                   </View>
-                  <Text style={styles.amount}>{money(t.amount)}</Text>
+                  <Text style={styles.amount}>{money(tItem.amount)}</Text>
                 </Pressable>
               );
             })}
