@@ -11,6 +11,8 @@ import { CARDS } from '../data/mock';
 import { LANGUAGES } from '../i18n/translations';
 import { RootStackParamList } from '../navigation/types';
 
+
+
 type Props = NativeStackScreenProps<RootStackParamList, 'Settings'>;
 
 const CARD_META_KEYS = ['settings_card1_meta', 'settings_card2_meta', 'settings_card3_meta'] as const;
@@ -33,6 +35,9 @@ export function SettingsScreen({ navigation }: Props) {
   const money = useMoney();
   const budget = allowance(tx, mode, demoEmpty, c);
 
+  const institutions = useStore((s) => s.institutions);
+  const connectedCount = institutions.filter((i) => i.connected).length;
+
   const [pickingCurrency, setPickingCurrency] = useState(false);
   const [pickingLanguage, setPickingLanguage] = useState(false);
 
@@ -42,11 +47,16 @@ export function SettingsScreen({ navigation }: Props) {
     { name: t('settings_goals'), hint: hasGoal ? 'card ·· 8802' : t('settings_none'), go: () => navigation.navigate('Goals') },
     { name: t('settings_notificationsNudges'), hint: t('settings_onCount', { n: 3 }), go: () => navigation.navigate('Notifications') },
     { name: t('settings_categories'), hint: t('settings_inUse', { n: 6 }), go: () => navigation.navigate('Budget') },
+    {
+      name: t('settings_openFinanceRow'),
+      hint: connectedCount > 0 ? t('of_connectedCount', { n: connectedCount }) : t('of_noneConnected'),
+      go: () => navigation.navigate('Connections'),
+    },
     { name: t('settings_currency'), hint: `${currency.symbol} ${currency.code}`, go: () => setPickingCurrency(true) },
     { name: t('settings_language'), hint: LANGUAGES.find((l) => l.code === lang)?.label ?? '', go: () => setPickingLanguage(true) },
     {
       name: t('settings_replayOnboarding'),
-      hint: t('settings_stepsCount', { n: 5 }),
+      hint: t('settings_stepsCount', { n: 6 }),
       go: () => {
         replayOnboarding();
         navigation.navigate('Onboarding');

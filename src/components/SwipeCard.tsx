@@ -15,6 +15,8 @@ export function SwipeCard({ t }: { t: Transaction }) {
   const setSplitCat = useStore((s) => s.setSplitCat);
   const cancelSplit = useStore((s) => s.cancelSplit);
   const commitSplit = useStore((s) => s.commitSplit);
+  const acceptBankAmount = useStore((s) => s.acceptBankAmount);
+  const keepApproxAmount = useStore((s) => s.keepApproxAmount);
   const money = useMoney();
   const tr = useT();
   const catLabel = useCategoryLabel();
@@ -52,7 +54,27 @@ export function SwipeCard({ t }: { t: Transaction }) {
   ).current;
 
   return (
-    <View style={styles.outer}>
+    <View>
+      {t.recon && (
+        <View style={styles.reconBlock}>
+          <Text style={styles.reconTitle}>{tr('of_reconTitle')}</Text>
+          <Text style={styles.reconAmounts}>
+            {tr('of_approxLabel')} {money(t.recon.approx)} · {tr('of_bankLabel')} {money(t.recon.bank)}
+          </Text>
+          <Text style={styles.reconDelta}>
+            {tr('of_delta')} +{money(t.recon.bank - t.recon.approx)}
+          </Text>
+          <View style={styles.reconBtnRow}>
+            <Pressable style={styles.reconConfirmBtn} onPress={() => acceptBankAmount(t.id)}>
+              <Text style={styles.reconConfirmText}>{tr('of_confirmBank')}</Text>
+            </Pressable>
+            <Pressable style={styles.reconKeepBtn} onPress={() => keepApproxAmount(t.id)}>
+              <Text style={styles.reconKeepText}>{tr('of_keepApprox')}</Text>
+            </Pressable>
+          </View>
+        </View>
+      )}
+      <View style={styles.outer}>
       <View style={styles.bgLabels} pointerEvents="none">
         <Text style={[styles.bgLabel, { color: liveDx > 60 ? colors.white : 'rgba(243,242,242,.32)' }]}>
           {tr('swipe_accept', { category: t.guess ? catLabel(t.guess) : '' })}
@@ -145,6 +167,7 @@ export function SwipeCard({ t }: { t: Transaction }) {
           </View>
         )}
       </Animated.View>
+      </View>
     </View>
   );
 }
@@ -320,5 +343,58 @@ const styles = StyleSheet.create({
     letterSpacing: 0.6,
     textTransform: 'uppercase',
     color: colors.ink,
+  },
+  reconBlock: {
+    backgroundColor: colors.chipRedBg,
+    padding: 12,
+    gap: 6,
+    marginBottom: 8,
+  },
+  reconTitle: {
+    fontFamily: font.extrabold,
+    fontSize: 10.5,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: colors.redDark,
+  },
+  reconAmounts: {
+    fontFamily: font.semibold,
+    fontSize: 12.5,
+    color: colors.redDark,
+  },
+  reconDelta: {
+    fontFamily: font.semibold,
+    fontSize: 11,
+    color: colors.redDark,
+  },
+  reconBtnRow: {
+    flexDirection: 'row',
+    gap: 7,
+    marginTop: 4,
+  },
+  reconConfirmBtn: {
+    backgroundColor: colors.red,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+  },
+  reconConfirmText: {
+    fontFamily: font.extrabold,
+    fontSize: 10.5,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    color: colors.white,
+  },
+  reconKeepBtn: {
+    borderWidth: 1,
+    borderColor: colors.redDark,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+  },
+  reconKeepText: {
+    fontFamily: font.extrabold,
+    fontSize: 10.5,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    color: colors.redDark,
   },
 });

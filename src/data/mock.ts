@@ -15,6 +15,8 @@ export interface Transaction {
   owner: 'me' | 'bia';
   joint?: boolean;
   splitWith?: Category | null;
+  institutionId?: string; // Open Finance institution this charge arrived from
+  recon?: { approx: number; bank: number }; // tap-to-pay vs bank amount, awaiting reconciliation
 }
 
 export const SEED_TX: Transaction[] = [

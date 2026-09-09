@@ -73,6 +73,17 @@ const STEP_KEYS: StepKeys[] = [
     fine: 'ob5_fine',
     cta: 'ob5_cta',
   },
+  {
+    title: 'ob6_title',
+    body: 'ob6_body',
+    rows: [
+      ['ob6_row1k', 'ob6_row1v'],
+      ['ob6_row2k', 'ob6_row2v'],
+      ['ob6_row3k', 'ob6_row3v'],
+    ],
+    fine: 'ob6_fine',
+    cta: 'ob6_cta',
+  },
 ];
 
 export function OnboardingScreen({ navigation }: Props) {
@@ -84,6 +95,11 @@ export function OnboardingScreen({ navigation }: Props) {
 
   function finish() {
     navigation.goBack();
+  }
+
+  function finishToInstitutions() {
+    navigation.goBack();
+    navigation.navigate('Institutions');
   }
 
   return (
@@ -123,7 +139,7 @@ export function OnboardingScreen({ navigation }: Props) {
             <Text style={styles.backText}>{t('back')}</Text>
           </Pressable>
         )}
-        <Pressable style={styles.nextBtn} onPress={() => (isLast ? finish() : setStep((s) => s + 1))}>
+        <Pressable style={styles.nextBtn} onPress={() => (isLast ? finishToInstitutions() : setStep((s) => s + 1))}>
           <Text style={styles.nextText}>{t(st.cta)}</Text>
         </Pressable>
       </View>

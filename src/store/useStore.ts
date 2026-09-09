@@ -6,6 +6,7 @@ import { billsTotalFor, cfg, BudgetCfg, Mode } from './selectors';
 import { CURRENCIES, CurrencyOption, formatMoney } from '../theme';
 import { Key, Lang, TRANSLATIONS } from '../i18n/translations';
 import { CATEGORY_KEYS } from '../i18n/categories';
+import { DEFAULT_INSTITUTIONS, IMPORT_TEMPLATES, OFInstitution, ScopeId } from '../data/openFinance';
 
 interface SplitState {
   txId: number;
@@ -18,6 +19,17 @@ interface SplitState {
 interface SheetState {
   open: boolean;
   pending: IncomingCharge | null;
+}
+
+export interface ConsentDraft {
+  institutionId: string;
+  scopes: ScopeId[];
+}
+
+export interface ImportReport {
+  institutionId: string;
+  imported: number;
+  pending: number;
 }
 
 export interface NewTransactionInput {
@@ -50,6 +62,9 @@ interface StoreState {
   nextCapId: number;
   currencyCode: string;
   language: Lang;
+  institutions: OFInstitution[];
+  consentDraft: ConsentDraft | null;
+  importReport: ImportReport | null;
 
   setMode: (mode: Mode) => void;
   setCurrency: (code: string) => void;
@@ -82,6 +97,14 @@ interface StoreState {
   toggleNudge: (key: string) => void;
   finishOnboarding: () => void;
   replayOnboarding: () => void;
+
+  setConsentDraft: (draft: ConsentDraft | null) => void;
+  connectInstitution: (institutionId: string, scopes: ScopeId[]) => void;
+  revokeInstitution: (institutionId: string) => void;
+  syncInstitution: (institutionId: string) => void;
+  clearImportReport: () => void;
+  acceptBankAmount: (id: number) => void;
+  keepApproxAmount: (id: number) => void;
 }
 
 export const useStore = create<StoreState>()(
@@ -106,6 +129,9 @@ export const useStore = create<StoreState>()(
       nextCapId: DEFAULT_CAPS.length + 1,
       currencyCode: 'BRL',
       language: 'en',
+      institutions: DEFAULT_INSTITUTIONS,
+      consentDraft: null,
+      importReport: null,
 
       setMode: (mode) => set({ mode }),
       setCurrency: (code) => set({ currencyCode: code }),
@@ -208,6 +234,59 @@ export const useStore = create<StoreState>()(
 
       finishOnboarding: () => set({ onboardingDone: true }),
       replayOnboarding: () => set({ onboardingDone: false }),
+
+      setConsentDraft: (draft) => set({ consentDraft: draft }),
+
+      connectInstitution: (institutionId, scopes) => {
+        const s = get();
+        const already = s.institutions.find((i) => i.id === institutionId)?.connected ?? false;
+        const template = already ? [] : IMPORT_TEMPLATES[institutionId] ?? [];
+        const consentUntil = new Date();
+        consentUntil.setFullYear(consentUntil.getFullYear() + 1);
+
+        let nextId = s.nextId;
+        const newTx: Transaction[] = template.map((tpl) => ({
+          id: nextId++,
+          merchant: tpl.merchant,
+          time: '—',
+          day: tpl.day,
+          method: tpl.method,
+          amount: tpl.amount,
+          cat: null,
+          guess: tpl.guess ?? undefined,
+          owner: 'me',
+          institutionId,
+          recon: tpl.recon,
+        }));
+
+        set({
+          institutions: s.institutions.map((i) =>
+            i.id === institutionId
+              ? { ...i, connected: true, syncedMinutesAgo: 0, consentUntil: consentUntil.toISOString().slice(0, 10), scopes }
+              : i
+          ),
+          tx: s.tx.concat(newTx),
+          nextId,
+          importReport: { institutionId, imported: newTx.length, pending: newTx.filter((t) => !t.cat).length },
+        });
+      },
+
+      revokeInstitution: (institutionId) =>
+        set((s) => ({
+          institutions: s.institutions.map((i) => (i.id === institutionId ? { ...i, connected: false, scopes: [], consentUntil: '' } : i)),
+          importReport: s.importReport?.institutionId === institutionId ? null : s.importReport,
+        })),
+
+      syncInstitution: (institutionId) =>
+        set((s) => ({ institutions: s.institutions.map((i) => (i.id === institutionId ? { ...i, syncedMinutesAgo: 0 } : i)) })),
+
+      clearImportReport: () => set({ importReport: null }),
+
+      acceptBankAmount: (id) =>
+        set((s) => ({ tx: s.tx.map((t) => (t.id === id && t.recon ? { ...t, amount: t.recon.bank, recon: undefined } : t)) })),
+
+      keepApproxAmount: (id) =>
+        set((s) => ({ tx: s.tx.map((t) => (t.id === id && t.recon ? { ...t, amount: t.recon.approx, recon: undefined } : t)) })),
     }),
     {
       name: 'tally-store',
@@ -215,7 +294,7 @@ export const useStore = create<StoreState>()(
       version: 1,
       // Don't persist transient UI state (open modals/sheets) — resuming mid-interaction is confusing.
       partialize: (s) => {
-        const { sheet, pickerTxId, split, incomingIndex, ...rest } = s;
+        const { sheet, pickerTxId, split, incomingIndex, consentDraft, importReport, ...rest } = s;
         return rest;
       },
     }
