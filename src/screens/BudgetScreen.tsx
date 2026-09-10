@@ -1,24 +1,19 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { colors, font } from '../theme';
 import { PushedHeader } from '../components/Headers';
 import { Kicker } from '../components/ui';
-import { EditFieldsModal } from '../components/EditFieldsModal';
-import { useStore, useBudgetCfg, useCurrency, useMoney, useT } from '../store/useStore';
+import { useStore, useBudgetCfg, useMoney, useT } from '../store/useStore';
 import { remainder, spentBeforeToday } from '../store/selectors';
-import { toNumber } from '../utils/number';
 import { Key } from '../i18n/translations';
 import { RootStackParamList } from '../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Budget'>;
 
 const DEFAULT_BILL_DUE_KEYS: Record<string, Key> = {
-  b1: 'budget_bill1_due',
-  b2: 'budget_bill2_due',
-  b3: 'budget_bill3_due',
-  b4: 'budget_bill4_due',
-  b5: 'budget_bill5_due',
+  b1: 'budget_bill1_due', b2: 'budget_bill2_due', b3: 'budget_bill3_due',
+  b4: 'budget_bill4_due', b5: 'budget_bill5_due',
 };
 
 export function BudgetScreen({ navigation }: Props) {
@@ -27,34 +22,34 @@ export function BudgetScreen({ navigation }: Props) {
   const demoEmpty = useStore((s) => s.demoEmpty);
   const bills = useStore((s) => s.bills);
   const caps = useStore((s) => s.caps);
-  const setIncome = useStore((s) => s.setIncome);
-  const addBill = useStore((s) => s.addBill);
-  const updateBill = useStore((s) => s.updateBill);
-  const removeBill = useStore((s) => s.removeBill);
-  const addCap = useStore((s) => s.addCap);
-  const updateCap = useStore((s) => s.updateCap);
-  const removeCap = useStore((s) => s.removeCap);
-  const currency = useCurrency();
+  const setEditTarget = useStore((s) => s.setEditTarget);
   const money = useMoney();
   const t = useT();
-  const parseAmount = (s: string) => toNumber(s);
 
   const c = useBudgetCfg();
   const rem = remainder(tx, mode, demoEmpty, c);
   const budget = Math.max(20, Math.round(rem / 6));
   const before = spentBeforeToday(tx, mode, demoEmpty);
 
-  const [editingIncome, setEditingIncome] = useState(false);
-  const [editingBillId, setEditingBillId] = useState<string | 'new' | null>(null);
-  const [editingCapId, setEditingCapId] = useState<string | 'new' | null>(null);
+  function editIncome() {
+    setEditTarget({ kind: 'income' });
+    navigation.navigate('EditFields');
+  }
 
-  const editingBill = editingBillId && editingBillId !== 'new' ? bills.find((b) => b.id === editingBillId) : null;
-  const editingCap = editingCapId && editingCapId !== 'new' ? caps.find((cp) => cp.id === editingCapId) : null;
+  function editBill(id: string | null) {
+    setEditTarget({ kind: 'bill', id });
+    navigation.navigate('EditFields');
+  }
+
+  function editCap(id: string | null) {
+    setEditTarget({ kind: 'cap', id });
+    navigation.navigate('EditFields');
+  }
 
   const whoLabel = mode === 'us' ? t('budget_householdIncome') : t('budget_yourMonthlyIncome');
 
   const mathRows = [
-    { k: whoLabel, v: money(c.income, 0), bold: false, onPress: () => setEditingIncome(true) },
+    { k: whoLabel, v: money(c.income, 0), bold: false, onPress: editIncome },
     { k: t('budget_fixedBillsRow'), v: `−${money(c.bills, 0)}`, bold: false },
     { k: t('budget_spentRange'), v: `−${money(before, 0)}`, bold: false },
     { k: t('budget_leftForDays', { days: 6 }), v: money(rem, 0), bold: true, thickTop: true },
@@ -113,7 +108,7 @@ export function BudgetScreen({ navigation }: Props) {
           </View>
           <View style={{ marginTop: 4 }}>
             {bills.map((b) => (
-              <Pressable key={b.id} onPress={() => setEditingBillId(b.id)} style={styles.billRow}>
+              <Pressable key={b.id} onPress={() => editBill(b.id)} style={styles.billRow}>
                 <View style={{ gap: 3, flex: 1 }}>
                   <Text style={styles.billName}>{b.name}</Text>
                   <Text style={[styles.billDue, { color: b.urgent ? colors.red : 'rgba(32,30,29,.45)' }]}>
@@ -124,7 +119,7 @@ export function BudgetScreen({ navigation }: Props) {
               </Pressable>
             ))}
           </View>
-          <Pressable style={styles.addBtn} onPress={() => setEditingBillId('new')}>
+          <Pressable style={styles.addBtn} onPress={() => editBill(null)}>
             <Text style={styles.addBtnText}>{t('budget_addBill')}</Text>
           </Pressable>
           <Text style={styles.footnote}>{t('budget_billsFootnote')}</Text>
@@ -134,7 +129,7 @@ export function BudgetScreen({ navigation }: Props) {
           <Kicker>{t('budget_softCaps')}</Kicker>
           <View style={{ gap: 12, marginTop: 11 }}>
             {caps.map((cap) => (
-              <Pressable key={cap.id} onPress={() => setEditingCapId(cap.id)} style={{ gap: 6 }}>
+              <Pressable key={cap.id} onPress={() => editCap(cap.id)} style={{ gap: 6 }}>
                 <View style={styles.rowBetween}>
                   <Text style={styles.capName}>{cap.name}</Text>
                   <Text style={styles.capUsed}>
@@ -152,67 +147,11 @@ export function BudgetScreen({ navigation }: Props) {
               </Pressable>
             ))}
           </View>
-          <Pressable style={[styles.addBtn, { marginTop: 14 }]} onPress={() => setEditingCapId('new')}>
+          <Pressable style={[styles.addBtn, { marginTop: 14 }]} onPress={() => editCap(null)}>
             <Text style={styles.addBtnText}>{t('budget_addCap')}</Text>
           </Pressable>
         </View>
       </ScrollView>
-
-      <EditFieldsModal
-        key={editingIncome ? `income-${mode}` : 'income-closed'}
-        visible={editingIncome}
-        title={whoLabel}
-        fields={[{ key: 'value', label: t('budget_monthlyAmount', { symbol: currency.symbol }), value: String(c.income), keyboardType: 'decimal-pad' }]}
-        onCancel={() => setEditingIncome(false)}
-        onSave={(v) => {
-          setIncome(mode, parseAmount(v.value));
-          setEditingIncome(false);
-        }}
-      />
-
-      <EditFieldsModal
-        key={editingBillId ? `bill-${editingBillId}` : 'bill-closed'}
-        visible={editingBillId !== null}
-        title={editingBill ? t('budget_editBill') : t('budget_addBillTitle')}
-        fields={[
-          { key: 'name', label: t('budget_name'), value: editingBill?.name ?? '', placeholder: t('budget_namePlaceholder') },
-          { key: 'personalAmount', label: t('budget_personalAmount', { symbol: currency.symbol }), value: editingBill ? String(editingBill.personalAmount) : '', keyboardType: 'decimal-pad' },
-          { key: 'householdAmount', label: t('budget_householdAmount', { symbol: currency.symbol }), value: editingBill ? String(editingBill.householdAmount) : '', keyboardType: 'decimal-pad' },
-          { key: 'due', label: t('budget_dueNote'), value: editingBill?.due ?? '', placeholder: t('budget_dueNotePlaceholder') },
-        ]}
-        onCancel={() => setEditingBillId(null)}
-        onSave={(v) => {
-          const patch = {
-            name: v.name || 'Bill',
-            personalAmount: parseAmount(v.personalAmount),
-            householdAmount: parseAmount(v.householdAmount),
-            due: v.due || '',
-          };
-          if (editingBill) updateBill(editingBill.id, patch);
-          else addBill(patch);
-          setEditingBillId(null);
-        }}
-        onDelete={editingBill ? () => { removeBill(editingBill.id); setEditingBillId(null); } : undefined}
-      />
-
-      <EditFieldsModal
-        key={editingCapId ? `cap-${editingCapId}` : 'cap-closed'}
-        visible={editingCapId !== null}
-        title={editingCap ? t('budget_editCap') : t('budget_addCapTitle')}
-        fields={[
-          { key: 'name', label: t('budget_category'), value: editingCap?.name ?? '', placeholder: t('budget_categoryPlaceholder') },
-          { key: 'used', label: t('budget_spentSoFar', { symbol: currency.symbol }), value: editingCap ? String(editingCap.used) : '0', keyboardType: 'decimal-pad' },
-          { key: 'cap', label: t('budget_monthlyCap', { symbol: currency.symbol }), value: editingCap ? String(editingCap.cap) : '', keyboardType: 'decimal-pad' },
-        ]}
-        onCancel={() => setEditingCapId(null)}
-        onSave={(v) => {
-          const patch = { name: v.name || 'Category', used: parseAmount(v.used), cap: Math.max(1, parseAmount(v.cap)) };
-          if (editingCap) updateCap(editingCap.id, patch);
-          else addCap(patch);
-          setEditingCapId(null);
-        }}
-        onDelete={editingCap ? () => { removeCap(editingCap.id); setEditingCapId(null); } : undefined}
-      />
     </View>
   );
 }

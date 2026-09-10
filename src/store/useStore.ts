@@ -42,6 +42,12 @@ export interface NewTransactionInput {
   method?: string;
 }
 
+export type EditTarget =
+  | { kind: 'income' }
+  | { kind: 'bill'; id: string | null }
+  | { kind: 'cap'; id: string | null }
+  | { kind: 'charge'; txId: number };
+
 interface StoreState {
   mode: Mode;
   tx: Transaction[];
@@ -65,6 +71,7 @@ interface StoreState {
   institutions: OFInstitution[];
   consentDraft: ConsentDraft | null;
   importReport: ImportReport | null;
+  editTarget: EditTarget | null;
 
   setMode: (mode: Mode) => void;
   setCurrency: (code: string) => void;
@@ -105,6 +112,7 @@ interface StoreState {
   clearImportReport: () => void;
   acceptBankAmount: (id: number) => void;
   keepApproxAmount: (id: number) => void;
+  setEditTarget: (target: EditTarget | null) => void;
 }
 
 export const useStore = create<StoreState>()(
@@ -132,6 +140,7 @@ export const useStore = create<StoreState>()(
       institutions: DEFAULT_INSTITUTIONS,
       consentDraft: null,
       importReport: null,
+      editTarget: null,
 
       setMode: (mode) => set({ mode }),
       setCurrency: (code) => set({ currencyCode: code }),
@@ -287,6 +296,8 @@ export const useStore = create<StoreState>()(
 
       keepApproxAmount: (id) =>
         set((s) => ({ tx: s.tx.map((t) => (t.id === id && t.recon ? { ...t, amount: t.recon.approx, recon: undefined } : t)) })),
+
+      setEditTarget: (target) => set({ editTarget: target }),
     }),
     {
       name: 'tally-store',
@@ -294,7 +305,7 @@ export const useStore = create<StoreState>()(
       version: 1,
       // Don't persist transient UI state (open modals/sheets) — resuming mid-interaction is confusing.
       partialize: (s) => {
-        const { sheet, pickerTxId, split, incomingIndex, consentDraft, importReport, ...rest } = s;
+        const { sheet, pickerTxId, split, incomingIndex, consentDraft, importReport, editTarget, ...rest } = s;
         return rest;
       },
     }

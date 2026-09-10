@@ -1,11 +1,10 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { CompositeScreenProps } from '@react-navigation/native';
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { colors, font } from '../theme';
 import { RootHeader } from '../components/Headers';
-import { AddTransactionModal } from '../components/AddTransactionModal';
 import { useCatMeta, useCategoryLabel, useLang, useMoney, useStore, useT } from '../store/useStore';
 import { filterTx, FILTERS, Filter } from '../store/selectors';
 import { weekdayShort, monthShort } from '../i18n/calendar';
@@ -29,7 +28,6 @@ export function ActivityScreen({ navigation }: Props) {
   const lang = useLang();
   const catLabel = useCategoryLabel();
   const catMeta = useCatMeta();
-  const [adding, setAdding] = useState(false);
   const filtered = filterTx(tx, mode, demoEmpty, filter as any);
 
   function filterLabel(f: Filter): string {
@@ -76,7 +74,7 @@ export function ActivityScreen({ navigation }: Props) {
           <Text style={styles.searchText}>{t('activity_searchPlaceholder')}</Text>
         </View>
 
-        <Pressable style={styles.addBtn} onPress={() => setAdding(true)}>
+        <Pressable style={styles.addBtn} onPress={() => navigation.navigate('AddTransaction')}>
           <Text style={styles.addBtnText}>{t('activity_addCharge')}</Text>
         </Pressable>
 
@@ -123,7 +121,6 @@ export function ActivityScreen({ navigation }: Props) {
           </View>
         ))}
       </ScrollView>
-      <AddTransactionModal visible={adding} onClose={() => setAdding(false)} />
     </View>
   );
 }

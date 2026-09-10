@@ -283,6 +283,7 @@ const en = {
   sheet_recurring: 'recurring',
 
   // Add transaction modal
+  addTx_kicker: 'New charge',
   addTx_title: 'Add a charge',
   addTx_merchant: 'Merchant',
   addTx_merchantPlaceholder: 'e.g. Padaria do Zé',
@@ -679,6 +680,7 @@ const pt: Dict = {
   sheet_usedTimes: 'usado {n}×',
   sheet_recurring: 'recorrente',
 
+  addTx_kicker: 'Nova compra',
   addTx_title: 'Adicionar compra',
   addTx_merchant: 'Estabelecimento',
   addTx_merchantPlaceholder: 'ex.: Padaria do Zé',
@@ -1071,6 +1073,7 @@ const fr: Dict = {
   sheet_usedTimes: 'utilisé {n}×',
   sheet_recurring: 'récurrent',
 
+  addTx_kicker: 'Nouvelle dépense',
   addTx_title: 'Ajouter une dépense',
   addTx_merchant: 'Commerçant',
   addTx_merchantPlaceholder: 'ex. Padaria do Zé',
@@ -1463,6 +1466,7 @@ const it: Dict = {
   sheet_usedTimes: 'usato {n}×',
   sheet_recurring: 'ricorrente',
 
+  addTx_kicker: 'Nuova spesa',
   addTx_title: 'Aggiungi una spesa',
   addTx_merchant: 'Esercente',
   addTx_merchantPlaceholder: 'es. Padaria do Zé',
@@ -1855,6 +1859,7 @@ const es: Dict = {
   sheet_usedTimes: 'usado {n}×',
   sheet_recurring: 'recurrente',
 
+  addTx_kicker: 'Nuevo cargo',
   addTx_title: 'Añadir un cargo',
   addTx_merchant: 'Comercio',
   addTx_merchantPlaceholder: 'ej. Padaria do Zé',

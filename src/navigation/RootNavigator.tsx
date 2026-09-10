@@ -17,6 +17,8 @@ import { InstitutionsScreen } from '../screens/InstitutionsScreen';
 import { ConsentScreen } from '../screens/ConsentScreen';
 import { AuthorizationScreen } from '../screens/AuthorizationScreen';
 import { ConnectionsScreen } from '../screens/ConnectionsScreen';
+import { EditFieldsScreen } from '../screens/EditFieldsScreen';
+import { AddTransactionScreen } from '../screens/AddTransactionScreen';
 import { useT } from '../store/useStore';
 
 const Tab = createBottomTabNavigator<TabParamList>();
@@ -52,6 +54,8 @@ export function RootNavigator() {
       <Stack.Screen name="Consent" component={ConsentScreen} options={{ animation: 'slide_from_right' }} />
       <Stack.Screen name="Authorization" component={AuthorizationScreen} options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
       <Stack.Screen name="Connections" component={ConnectionsScreen} options={{ animation: 'slide_from_right' }} />
+      <Stack.Screen name="EditFields" component={EditFieldsScreen} options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+      <Stack.Screen name="AddTransaction" component={AddTransactionScreen} options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
     </Stack.Navigator>
   );
 }

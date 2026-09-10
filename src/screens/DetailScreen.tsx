@@ -1,13 +1,11 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { colors, font } from '../theme';
 import { PushedHeader } from '../components/Headers';
 import { Kicker } from '../components/ui';
-import { EditFieldsModal } from '../components/EditFieldsModal';
-import { useCatMeta, useCategoryLabel, useLang, useStore, useBudgetCfg, useCurrency, useMoney, useT } from '../store/useStore';
+import { useCatMeta, useCategoryLabel, useLang, useStore, useBudgetCfg, useMoney, useT } from '../store/useStore';
 import { allowance, spentToday } from '../store/selectors';
-import { toNumber } from '../utils/number';
 import { CATEGORIES } from '../data/mock';
 import { weekdayShort, monthShort } from '../i18n/calendar';
 import { SplitRatioBar } from '../components/SplitRatioBar';
@@ -26,16 +24,14 @@ export function DetailScreen({ route, navigation }: Props) {
   const openSplit = useStore((s) => s.openSplit);
   const setSplitRatio = useStore((s) => s.setSplitRatio);
   const commitSplit = useStore((s) => s.commitSplit);
-  const updateTransaction = useStore((s) => s.updateTransaction);
   const removeTransaction = useStore((s) => s.removeTransaction);
+  const setEditTarget = useStore((s) => s.setEditTarget);
   const c = useBudgetCfg();
-  const currency = useCurrency();
   const money = useMoney();
   const t = useT();
   const lang = useLang();
   const catLabel = useCategoryLabel();
   const catMeta = useCatMeta();
-  const [editingCharge, setEditingCharge] = useState(false);
 
   const tx_ = tx.find((x) => x.id === txId);
   if (!tx_) {
@@ -56,7 +52,13 @@ export function DetailScreen({ route, navigation }: Props) {
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <PushedHeader kicker={t('detail_kicker')} title={t('detail_title')} onClose={() => navigation.goBack()} />
       <ScrollView contentContainerStyle={{ paddingBottom: 26 }}>
-        <Pressable style={styles.section} onPress={() => setEditingCharge(true)}>
+        <Pressable
+          style={styles.section}
+          onPress={() => {
+            setEditTarget({ kind: 'charge', txId: tx_.id });
+            navigation.navigate('EditFields');
+          }}
+        >
           <View style={styles.headRow}>
             <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
               <Text style={styles.merchant}>{tx_.merchant}</Text>
@@ -149,20 +151,6 @@ export function DetailScreen({ route, navigation }: Props) {
           </Pressable>
         </View>
       </ScrollView>
-
-      <EditFieldsModal
-        visible={editingCharge}
-        title={t('detail_editCharge')}
-        fields={[
-          { key: 'merchant', label: t('detail_merchant'), value: tx_.merchant },
-          { key: 'amount', label: t('detail_amount', { symbol: currency.symbol }), value: String(tx_.amount), keyboardType: 'decimal-pad' },
-        ]}
-        onCancel={() => setEditingCharge(false)}
-        onSave={(v) => {
-          updateTransaction(tx_.id, { merchant: v.merchant || tx_.merchant, amount: toNumber(v.amount) });
-          setEditingCharge(false);
-        }}
-      />
     </View>
   );
 }

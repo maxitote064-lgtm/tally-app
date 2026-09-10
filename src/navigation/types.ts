@@ -10,6 +10,8 @@ export type RootStackParamList = {
   Consent: { institutionId: string };
   Authorization: { institutionId: string };
   Connections: undefined;
+  EditFields: undefined;
+  AddTransaction: undefined;
 };
 
 export type TabParamList = {
