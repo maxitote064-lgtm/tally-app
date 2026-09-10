@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { BackHandler, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font } from '../theme';
 import { useT } from '../store/useStore';
@@ -35,11 +35,27 @@ export function EditFieldsModal({
     Object.fromEntries(fields.map((f) => [f.key, f.value]))
   );
 
+  useEffect(() => {
+    if (!visible || Platform.OS !== 'android') return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      onCancel();
+      return true;
+    });
+    return () => sub.remove();
+  }, [visible, onCancel]);
+
+  if (!visible) return null;
+
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
+    // Deliberately not React Native's <Modal>: on Android, Modal renders its
+    // own native Dialog window which doesn't reliably resize for the
+    // keyboard no matter what KeyboardAvoidingView is told, leaving the
+    // Save button hidden behind the keyboard. Rendering in-tree instead lets
+    // the screen's own keyboard handling apply normally.
+    <View style={styles.overlay} pointerEvents="box-none">
       <Pressable style={styles.backdrop} onPress={onCancel} />
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.kav}
         pointerEvents="box-none"
       >
@@ -81,11 +97,12 @@ export function EditFieldsModal({
           )}
         </View>
       </KeyboardAvoidingView>
-    </Modal>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(32,30,29,.45)' },
   kav: {
     position: 'absolute',

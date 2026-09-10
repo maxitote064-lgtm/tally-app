@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CompositeScreenProps } from '@react-navigation/native';
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
@@ -9,7 +9,7 @@ import { Btn, Divider, Kicker, Section } from '../components/ui';
 import { useStore, useBudgetCfg, useCatMeta, useLang, useMoney, useT } from '../store/useStore';
 import { allowance, spentToday, todayTx } from '../store/selectors';
 import { SwipeCard } from '../components/SwipeCard';
-import { weekdayShort, monthFull } from '../i18n/calendar';
+import { weekdayShort, monthFull, monthShort } from '../i18n/calendar';
 import { RootStackParamList, TabParamList } from '../navigation/types';
 
 type Props = CompositeScreenProps<
@@ -35,6 +35,9 @@ export function TodayScreen({ navigation }: Props) {
   const left = budget - spent;
   const uncat = today.filter((t) => !t.cat);
 
+  const [selectedDay, setSelectedDay] = useState<number | null>(null);
+  const DATE_OF_MONTH = [23, 24, 25, 26, 27, 28, 29]; // Sun..Sat, week ending on today (Wed 26 Aug)
+
   const week = useMemo(() => {
     const weekVals = mode === 'us' ? [482, 705, 1044] : [318, 470, 692];
     const raw = [
@@ -55,6 +58,15 @@ export function TodayScreen({ navigation }: Props) {
       labelColor: d.isToday ? colors.red : colors.mutedFaint,
     }));
   }, [mode, spent, budget, lang]);
+
+  const selected = selectedDay !== null ? week.find((d) => d.wd === selectedDay) : undefined;
+  const selectedDetail = selected
+    ? t('today_dayDetail', {
+        date: `${weekdayShort(lang, selected.wd)} ${DATE_OF_MONTH[selected.wd]} ${monthShort(lang, 7)}`,
+        amount: money(selected.v, 0),
+        pct: Math.round((selected.v / budget) * 100),
+      })
+    : null;
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -86,12 +98,17 @@ export function TodayScreen({ navigation }: Props) {
           </View>
           <View style={styles.weekRow}>
             {week.map((d) => (
-              <View key={d.day} style={styles.weekCol}>
+              <Pressable
+                key={d.day}
+                onPress={() => setSelectedDay((cur) => (cur === d.wd ? null : d.wd))}
+                style={[styles.weekCol, selectedDay === d.wd && styles.weekColSelected]}
+              >
                 <View style={[styles.weekBar, { height: d.h, backgroundColor: d.fill }]} />
                 <Text style={[styles.weekLabel, { color: d.labelColor }]}>{d.day}</Text>
-              </View>
+              </Pressable>
             ))}
           </View>
+          {selectedDetail && <Text style={styles.dayDetail}>{selectedDetail}</Text>}
         </Section>
 
         {today.length === 0 && (
@@ -191,8 +208,10 @@ const styles = StyleSheet.create({
     borderLeftWidth: 1,
     borderLeftColor: 'rgba(32,30,29,.12)',
   },
+  weekColSelected: { backgroundColor: colors.rowPress },
   weekBar: { width: 10 },
   weekLabel: { fontFamily: font.extrabold, fontSize: 9.5, letterSpacing: 0.5 },
+  dayDetail: { fontFamily: font.semibold, fontSize: 11.5, color: colors.ink, marginTop: 8 },
   emptyMark: { width: 40, height: 40, borderWidth: 2, borderColor: 'rgba(32,30,29,.3)' },
   emptyTitle: { fontFamily: font.extrabold, fontSize: 19, letterSpacing: -0.2, color: colors.ink, maxWidth: 270 },
   emptyBody: { fontFamily: font.regular, fontSize: 13, lineHeight: 20, color: 'rgba(32,30,29,.6)', maxWidth: 290 },

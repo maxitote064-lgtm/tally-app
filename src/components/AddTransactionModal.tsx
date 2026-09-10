@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { BackHandler, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font } from '../theme';
 import { CATEGORIES, Category } from '../data/mock';
@@ -36,10 +36,25 @@ export function AddTransactionModal({ visible, onClose }: { visible: boolean; on
     onClose();
   }
 
+  useEffect(() => {
+    if (!visible || Platform.OS !== 'android') return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      onClose();
+      return true;
+    });
+    return () => sub.remove();
+  }, [visible, onClose]);
+
+  if (!visible) return null;
+
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    // Not React Native's <Modal> — on Android it opens a separate native
+    // Dialog window that doesn't reliably resize for the keyboard, hiding
+    // the Save button. Rendering in-tree lets the screen's own keyboard
+    // handling apply normally.
+    <View style={styles.overlay} pointerEvents="box-none">
       <Pressable style={styles.backdrop} onPress={onClose} />
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.kav} pointerEvents="box-none">
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.kav} pointerEvents="box-none">
         <View style={[styles.sheet, { paddingBottom: insets.bottom + 16 }]}>
           <Text style={styles.title}>{t('addTx_title')}</Text>
           <ScrollView style={{ maxHeight: 420 }} contentContainerStyle={{ gap: 14 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
@@ -118,11 +133,12 @@ export function AddTransactionModal({ visible, onClose }: { visible: boolean; on
           </View>
         </View>
       </KeyboardAvoidingView>
-    </Modal>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(32,30,29,.45)' },
   kav: { position: 'absolute', left: 0, right: 0, bottom: 0 },
   sheet: {
