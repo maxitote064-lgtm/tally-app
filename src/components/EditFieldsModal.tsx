@@ -47,11 +47,16 @@ export function EditFieldsModal({
   if (!visible) return null;
 
   return (
-    // Deliberately not React Native's <Modal>: on Android, Modal renders its
-    // own native Dialog window which doesn't reliably resize for the
-    // keyboard no matter what KeyboardAvoidingView is told, leaving the
-    // Save button hidden behind the keyboard. Rendering in-tree instead lets
-    // the screen's own keyboard handling apply normally.
+    // Deliberately not React Native's <Modal> (its own native Dialog window
+    // on Android doesn't reliably resize for the keyboard). The
+    // KeyboardAvoidingView below spans the full screen and pushes the sheet
+    // up via justifyContent rather than growing an absolute-bottom view's
+    // own intrinsic height — the latter measures unreliably the instant the
+    // keyboard opens. Inputs are NOT autoFocused: autofocusing on mount
+    // opens the keyboard before KeyboardAvoidingView finishes its first
+    // layout pass, so its very first padding calculation comes out wrong
+    // and never self-corrects on iOS. Tapping a field to type is the
+    // reliable tradeoff.
     <View style={styles.overlay} pointerEvents="box-none">
       <Pressable style={styles.backdrop} onPress={onCancel} />
       <KeyboardAvoidingView
@@ -77,7 +82,6 @@ export function EditFieldsModal({
                   placeholder={f.placeholder}
                   placeholderTextColor="rgba(32,30,29,.4)"
                   style={styles.input}
-                  autoFocus={fields[0].key === f.key}
                 />
               </View>
             ))}
@@ -105,10 +109,8 @@ const styles = StyleSheet.create({
   overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(32,30,29,.45)' },
   kav: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
+    flex: 1,
+    justifyContent: 'flex-end',
   },
   sheet: {
     backgroundColor: colors.bg,

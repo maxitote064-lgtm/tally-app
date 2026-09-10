@@ -48,10 +48,15 @@ export function AddTransactionModal({ visible, onClose }: { visible: boolean; on
   if (!visible) return null;
 
   return (
-    // Not React Native's <Modal> — on Android it opens a separate native
-    // Dialog window that doesn't reliably resize for the keyboard, hiding
-    // the Save button. Rendering in-tree lets the screen's own keyboard
-    // handling apply normally.
+    // Deliberately not React Native's <Modal> (its own native Dialog window
+    // on Android doesn't reliably resize for the keyboard). The
+    // KeyboardAvoidingView below spans the full screen and pushes the sheet
+    // up via justifyContent rather than growing an absolute-bottom view's
+    // own intrinsic height — the latter measures unreliably the instant the
+    // keyboard opens. The merchant field is NOT autoFocused: autofocusing
+    // on mount opens the keyboard before KeyboardAvoidingView finishes its
+    // first layout pass, so its very first padding calculation comes out
+    // wrong and never self-corrects on iOS.
     <View style={styles.overlay} pointerEvents="box-none">
       <Pressable style={styles.backdrop} onPress={onClose} />
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.kav} pointerEvents="box-none">
@@ -66,7 +71,6 @@ export function AddTransactionModal({ visible, onClose }: { visible: boolean; on
                 placeholder={t('addTx_merchantPlaceholder')}
                 placeholderTextColor="rgba(32,30,29,.4)"
                 style={styles.input}
-                autoFocus
               />
             </View>
             <View style={{ gap: 6 }}>
@@ -140,7 +144,7 @@ export function AddTransactionModal({ visible, onClose }: { visible: boolean; on
 const styles = StyleSheet.create({
   overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(32,30,29,.45)' },
-  kav: { position: 'absolute', left: 0, right: 0, bottom: 0 },
+  kav: { flex: 1, justifyContent: 'flex-end' },
   sheet: {
     backgroundColor: colors.bg,
     borderTopWidth: 2,
