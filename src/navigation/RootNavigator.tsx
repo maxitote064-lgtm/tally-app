@@ -54,8 +54,8 @@ export function RootNavigator() {
       <Stack.Screen name="Consent" component={ConsentScreen} options={{ animation: 'slide_from_right' }} />
       <Stack.Screen name="Authorization" component={AuthorizationScreen} options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
       <Stack.Screen name="Connections" component={ConnectionsScreen} options={{ animation: 'slide_from_right' }} />
-      <Stack.Screen name="EditFields" component={EditFieldsScreen} options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
-      <Stack.Screen name="AddTransaction" component={AddTransactionScreen} options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+      <Stack.Screen name="EditFields" component={EditFieldsScreen} options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
+      <Stack.Screen name="AddTransaction" component={AddTransactionScreen} options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
     </Stack.Navigator>
   );
 }
